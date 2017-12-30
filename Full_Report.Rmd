@@ -80,3 +80,124 @@ ggplot(train, aes(x = shipping, y = log10(price))) +
 # Analysis
 # Model Building
 # Conclusion
+# eBay acronyms
+A-E
+B&W: black and white
+
+BC: back cover (usually used as a description for books)
+
+BIN: Buy It Now
+
+CIP: customer initiated payment
+
+DOA: dead on arrival (an item that doesn't work or is broken when it's received)
+
+DSR: detailed seller rating (additional Feedback ratings buyers can give sellers)
+
+EST: Eastern Standard Time
+
+EUC: excellent used condition
+
+F-I
+FAQ: frequently asked questions (a list of questions with answers.)
+
+FB: Feedback
+
+FC: fine condition
+
+FOB: freight on board (usually means something has shipped)
+
+FS: full screen (usually applied to a DVD or video format)
+
+FVF: final value fee
+
+G: good condition
+
+GBP: Great Britain pounds
+
+GU: gently used (item that has been used but shows little wear, accompanied by explanation of wear)
+
+HP: home page
+
+HTF: hard to find
+
+HTML: hypertext markup language (the language used to create web pages)
+
+IE: Internet Explorer
+
+IM: instant messaging
+
+INIT: initials
+
+ISP: Internet service provider (a company that gives you access to the Internet)
+
+J-M
+JPG: JPEG (preferred file format for pictures on eBay, pronounced "jay-peg")
+
+LTBX: letterbox (video format that recreates a widescreen image)
+
+LTD: limited edition
+
+MNT: mint or in perfect condition (a subjective term that doesn't necessarily mean new)
+
+MIB: mint in box
+
+MIJ: made in Japan
+
+MIMB: mint in mint box
+
+MIMP: mint in mint package
+
+MIP: mint in package
+
+MNB: mint no box
+
+MOC: mint on card
+
+MOMC: mint on mint card
+
+MONMC: mint on near mint card
+
+MWBT: mint with both tags
+
+MWMT: mint with mint tags
+
+N-P
+NARU: not a registered user (also a suspended user)
+
+NBW: never been worn
+
+NC: no cover
+
+NIB: new in box
+
+NM: near mint
+
+NOS: new old stock
+
+NR: no reserve price (for an auction-style listing)
+
+NRFB: never removed from box
+
+NWT: new with tags
+
+NWOB: new without box
+
+NWOT: new without original tags
+
+OEM: original equipment manufacturer
+
+OOP: out of print
+
+PST: Pacific Standard Time
+
+Q-Z
+RET: retired
+
+SCR: scratch
+
+S/O: sold out
+
+Sig: signature
+
+
