@@ -13,12 +13,14 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
+library(ggplot2)
 ```
 
 # About
 Mercari’s [challenge](https://www.kaggle.com/c/mercari-price-suggestion-challenge) is to build an algorithm that automatically suggests the right product prices. You’ll be provided user-inputted text descriptions of their products, including details like product category name, brand name, and item condition.
 
 # Exploration
+## Data Loading
 * Load training data
 ```{r loadData, message = FALSE, warning = FALSE, tidy = TRUE}
 train <- read.csv("Mercari-Price-Suggestion-Challenge/data/train.tsv", sep = "\t", stringsAsFactors = FALSE)
@@ -29,13 +31,50 @@ train <- read.csv("Mercari-Price-Suggestion-Challenge/data/train.tsv", sep = "\t
 glimpse(train)
 ```
 * All about factors
-
 It seems there are some columns are factors, let us convert them to the right format
- + item condition factor
+
 ```{r}
+#item condition factor
 train$item_condition_id <- as.factor(train$item_condition_id)
 levels(train$item_condition_id)
 table(train$item_condition_id)
+
+#shupping
+train$shipping <- as.factor(train$shipping)
+levels(train$shipping)
+table(train$shipping)
+```
+* Price summary
+
+```{r}
+summary(train$price)
+```
+
+## Feature relationships
+
+```{r}
+ggplot(train, aes(x = item_condition_id, y = log10(price))) +
+  geom_boxplot()
+```
+
+```{r warning=FALSE}
+ggplot(train, aes(x = shipping, y = log10(price))) +
+  geom_boxplot()
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+```
+
+```{r}
 ```
 # Wrangling
 # Analysis
