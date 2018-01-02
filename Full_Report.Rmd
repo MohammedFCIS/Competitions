@@ -69,19 +69,11 @@ sd = sd(train$price)))
      
 ```
 So, finally we have the gift/free items in the plot and it seems like an outlier along with the pricy data, as we have a nearly normal distibution for the prices. Let us investigate the distribution more. 
-```{r}
-ggplot(data = train, aes(x = log(price + 1))) + 
-    geom_histogram(fill = 'darkblue') +
-    labs(title = 'Histogram and of log item price + 1') +
-  geom_rug() 
-```
-It seems the data is centered between 3 and 7, let us investigate the statistics more
+It seems the data is centered between 3 and 7, as also the following statistics confirm.
 ```{r}
 summary(log(train$price + 1))
 
 ```
-That confirms our induction from the plot and conclude our investigation, for now, around the price.
-
 ## Item Condition
 Item condition is a factor data, so let us convert it to a factor first.right format
 
@@ -117,62 +109,23 @@ ggplot(data = train, aes(x = item_condition_id, y = log(price + 1))) +
 It seems that item condition is not the main contributor to the price as the best price at condition _5_ with few items and the second best price at condition _1_ with a lot of items.
 
 ## Shipping
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+It is the second numeric facotr predictor. It is simply _1_ when shipping item is paied by the seller and _0_ otherwise.
+Let us convert it to a facotr and see its statistics
 ```{r}
 #shupping
 train$shipping <- as.factor(train$shipping)
 levels(train$shipping)
 table(train$shipping)
 ```
-* Price summary
+It does not seem contributing that much to the reponse variable, so let us investigate its relation with the _price_
 
 ```{r}
+train %>%
+    ggplot(aes(x = log(price+1), fill = shipping)) + 
+    geom_density(adjust = 2, alpha = 0.6) + 
+    labs(x = 'Log price', y = '', title = 'log(price) vs. shipping')
 ```
-
+It seems that if you are going to pay for the shipping you will have a little lower price, but not that much right !!
 
 ```{r}
 
