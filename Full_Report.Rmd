@@ -38,7 +38,8 @@ train <- fread("Mercari-Price-Suggestion-Challenge/data/train.tsv", sep = "\t", 
 glimpse(train)
 ```
 At the first glance, excluding the *train_id* column, the numeric data are only 3 columns one of them is the response variable _price_, while the other two are factor data which mean that we have a very limited number of features and that mean we will need the help of the other four text predictors to build our model. So let us investigate these features one by one to see what we can do.
-# price (The response/target variable)
+
+## Price (The response/target variable)
 Let’s start with an analysis of the response0 variable: price. First, the range of item prices:
 ```{r}
 summary(train$price)
@@ -81,28 +82,87 @@ summary(log(train$price + 1))
 ```
 That confirms our induction from the plot and conclude our investigation, for now, around the price.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-It seems there are some columns are factors, let us convert them to the right format
+## Item Condition
+Item condition is a factor data, so let us convert it to a factor first.right format
 
 ```{r}
 #item condition factor
 train$item_condition_id <- as.factor(train$item_condition_id)
 levels(train$item_condition_id)
+```
+Now, let us see the statistics summary of items conditions
+```{r}
 table(train$item_condition_id)
+```
 
+We can confirm it more by the following plot
+```{r}
+train[, .N, by = item_condition_id] %>%
+    ggplot(aes(x = item_condition_id, y = N/1000)) +
+    geom_bar(stat = 'identity', fill = 'cyan2') + 
+    labs(x = 'Item condition', y = 'Number of items (000s)', title = 'Number of items by condition category')
+```
+It seems most of the items are in condition _1_ which is, I do not know there is no ordinal description in the compition. So we do not know if it _1_ is the best or the worst. However, hanks to kaggler @Juraj for pointing out that in fact condition 1 is the best and 5 is the worst. 
+
+Now, let us compare the _item conditions_ predictor aginst the response variable _price_
+
+```{r}
+train[, .(.N, median_price = median(price)), by = item_condition_id][order(item_condition_id)]
+ggplot(data = train, aes(x = item_condition_id, y = log(price + 1))) + 
+    geom_boxplot(fill = 'cyan2', color = 'darkgrey')
+```
+
+
+
+It seems that item condition is not the main contributor to the price as the best price at condition _5_ with few items and the second best price at condition _1_ with a lot of items.
+
+## Shipping
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
 #shupping
 train$shipping <- as.factor(train$shipping)
 levels(train$shipping)
@@ -113,16 +173,13 @@ table(train$shipping)
 ```{r}
 ```
 
-## Feature relationships
 
 ```{r}
-ggplot(train, aes(x = item_condition_id, y = log10(price))) +
-  geom_boxplot()
+
 ```
 
 ```{r warning=FALSE}
-ggplot(train, aes(x = shipping, y = log10(price))) +
-  geom_boxplot()
+
 ```
 
 
@@ -139,10 +196,12 @@ ggplot(train, aes(x = shipping, y = log10(price))) +
 
 ```{r}
 ```
-# Wrangling
-# Analysis
+
 # Model Building
 # Conclusion
+# Credit
+[Troy Walters](https://www.kaggle.com/captcalculator)
+
 # eBay acronyms
 A-E
 B&W: black and white
