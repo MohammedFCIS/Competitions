@@ -38,6 +38,62 @@ train <- fread("Mercari-Price-Suggestion-Challenge/data/train.tsv", sep = "\t", 
 glimpse(train)
 ```
 At the first glance, excluding the *train_id* column, the numeric data are only 3 columns one of them is the response variable _price_, while the other two are factor data which mean that we have a very limited number of features and that mean we will need the help of the other four text predictors to build our model. So let us investigate these features one by one to see what we can do.
+# price (The response/target variable)
+Let’s start with an analysis of the response0 variable: price. First, the range of item prices:
+```{r}
+summary(train$price)
+```
+It seems there are items are givem as gifts (min. is 0), and we have a few very expensive items as well.
+Let us visualize it for more clear picture
+```{r}
+ggplot(data = train, aes(x = price)) + 
+    geom_histogram(fill = 'darkblue') +
+    labs(title = 'Histogram of price')
+```
+It seems because we have a very expensive items (and very view) we will need to take the log for better analysis
+```{r}
+ggplot(data = train, aes(x = log(price))) + 
+    geom_histogram(fill = 'darkblue') +
+    labs(title = 'Histogram of log item price')
+```
+Now, it is much better and clear, but it seems taking log of prices made the free/gift items to be omitted, as taking log for 0 is undefined, so we will have to add a dummy 1 to include it with us in the plot, consider it a tax :P .
+```{r}
+ggplot(data = train, aes(x = log(price + 1))) + 
+    geom_histogram(fill = 'darkblue') +
+    labs(title = 'Histogram of log item price + 1') +
+  geom_rug() +
+  stat_function(fun = dnorm, colour = "red",
+arg = list(mean = mean(train$price),
+sd = sd(train$price)))
+     
+```
+So, finally we have the gift/free items in the plot and it seems like an outlier along with the pricy data, as we have a nearly normal distibution for the prices. Let us investigate the distribution more. 
+```{r}
+ggplot(data = train, aes(x = log(price + 1))) + 
+    geom_histogram(fill = 'darkblue') +
+    labs(title = 'Histogram and of log item price + 1') +
+  geom_rug() 
+```
+It seems the data is centered between 3 and 7, let us investigate the statistics more
+```{r}
+summary(log(train$price + 1))
+
+```
+That confirms our induction from the plot and conclude our investigation, for now, around the price.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 It seems there are some columns are factors, let us convert them to the right format
 
@@ -55,7 +111,6 @@ table(train$shipping)
 * Price summary
 
 ```{r}
-summary(train$price)
 ```
 
 ## Feature relationships
