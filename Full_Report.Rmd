@@ -12,8 +12,15 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(dplyr)
-library(ggplot2)
+library(dplyr) #data frame manipulation
+library(ggplot2) #visualization
+library(data.table) #reading table
+library(magrittr) #code enhancement
+library(scales) #for plot scaling
+library(stringr) #string operations
+library(quanteda) #text mining
+library(gridExtra) # for plotting many plots in grids
+
 ```
 
 # About
