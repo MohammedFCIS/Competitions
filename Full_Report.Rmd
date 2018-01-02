@@ -26,18 +26,19 @@ library(gridExtra) # for plotting many plots in grids
 # About
 Mercari’s [challenge](https://www.kaggle.com/c/mercari-price-suggestion-challenge) is to build an algorithm that automatically suggests the right product prices. You’ll be provided user-inputted text descriptions of their products, including details like product category name, brand name, and item condition.
 
-# Exploration
-## Data Loading
+# Exploratory Data Analysis
+## Data overview
 * Load training data
 ```{r loadData, message = FALSE, warning = FALSE, tidy = TRUE}
-train <- read.csv("Mercari-Price-Suggestion-Challenge/data/train.tsv", sep = "\t", stringsAsFactors = FALSE)
+train <- fread("Mercari-Price-Suggestion-Challenge/data/train.tsv", sep = "\t", stringsAsFactors = FALSE, showProgress = FALSE)
 ```
 
 * Inspect structure
 ```{r inspectStructure}
 glimpse(train)
 ```
-* All about factors
+At the first glance, excluding the *train_id* column, the numeric data are only 3 columns one of them is the response variable _price_, while the other two are factor data which mean that we have a very limited number of features and that mean we will need the help of the other four text predictors to build our model. So let us investigate these features one by one to see what we can do.
+
 It seems there are some columns are factors, let us convert them to the right format
 
 ```{r}
