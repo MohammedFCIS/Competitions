@@ -126,10 +126,20 @@ train %>%
     labs(x = 'Log price', y = '', title = 'log(price) vs. shipping')
 ```
 It seems that if you are going to pay for the shipping you will have a little lower price, but not that much right !!
+# Brand
+Clearly the two numeric predictor factors are not contributing so much into the response variable. So, let us try to investigate the text predictors and begin with the _brand_ predictor.
 
 ```{r}
+train[, .(median_price = median(price)), by = brand_name] %>%
+    head(25) %>%
+    ggplot(aes(x = reorder(brand_name, median_price), y = median_price)) + 
+    geom_point(color = 'cyan2') + 
+    scale_y_continuous(labels = scales::dollar) + 
+    coord_flip() +
+    labs(x = '', y = 'Median price', title = 'Top 25 most expensive brands') 
 
 ```
+OK, finally we have a strongly contributer predictor. It seems that brands affect prices as it should be.
 
 ```{r warning=FALSE}
 
