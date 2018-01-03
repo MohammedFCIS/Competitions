@@ -62,10 +62,7 @@ Now, it is much better and clear, but it seems taking log of prices made the fre
 ggplot(data = train, aes(x = log(price + 1))) + 
     geom_histogram(fill = 'darkblue') +
     labs(title = 'Histogram of log item price + 1') +
-  geom_rug() +
-  stat_function(fun = dnorm, colour = "red",
-arg = list(mean = mean(train$price),
-sd = sd(train$price)))
+  geom_rug() 
      
 ```
 So, finally we have the gift/free items in the plot and it seems like an outlier along with the pricy data, as we have a nearly normal distibution for the prices. Let us investigate the distribution more. 
@@ -75,7 +72,7 @@ summary(log(train$price + 1))
 
 ```
 ## Item Condition
-Item condition is a factor data, so let us convert it to a factor first.right format
+Item condition is a factor data, so let us convert it to a factor first.
 
 ```{r}
 #item condition factor
@@ -88,7 +85,7 @@ table(train$item_condition_id)
 ```
 
 We can confirm it more by the following plot
-```{r}
+```{r tidy=TRUE}
 train[, .N, by = item_condition_id] %>%
     ggplot(aes(x = item_condition_id, y = N/1000)) +
     geom_bar(stat = 'identity', fill = 'cyan2') + 
@@ -98,7 +95,7 @@ It seems most of the items are in condition _1_ which is, I do not know there is
 
 Now, let us compare the _item conditions_ predictor aginst the response variable _price_
 
-```{r}
+```{r tidy=TRUE}
 train[, .(.N, median_price = median(price)), by = item_condition_id][order(item_condition_id)]
 ggplot(data = train, aes(x = item_condition_id, y = log(price + 1))) + 
     geom_boxplot(fill = 'cyan2', color = 'darkgrey')
@@ -111,6 +108,7 @@ It seems that item condition is not the main contributor to the price as the bes
 ## Shipping
 It is the second numeric facotr predictor. It is simply _1_ when shipping item is paied by the seller and _0_ otherwise.
 Let us convert it to a facotr and see its statistics
+
 ```{r}
 #shupping
 train$shipping <- as.factor(train$shipping)
@@ -127,7 +125,13 @@ train %>%
 ```
 It seems that if you are going to pay for the shipping you will have a little lower price, but not that much right !!
 # Brand
-Clearly the two numeric predictor factors are not contributing so much into the response variable. So, let us try to investigate the text predictors and begin with the _brand_ predictor.
+Clearly the two numeric predictor factors are not contributing so much into the response variable.
+How many brands we have?
+```{r}
+length(unique(train$brand_name))
+
+```
+Wow, that is a lot. So, let us try to investigate the text predictors and begin with the _brand_ predictor.
 
 ```{r}
 train[, .(median_price = median(price)), by = brand_name] %>%
@@ -141,20 +145,59 @@ train[, .(median_price = median(price)), by = brand_name] %>%
 ```
 OK, finally we have a strongly contributer predictor. It seems that brands affect prices as it should be.
 
-```{r warning=FALSE}
-
-```
-
+## Item Categories
+Now it is _item categories_ turn, we expect a lot from this variable. Let us begin by see how many categoris are there? 
 
 ```{r}
-
+length(unique(train$category_name))
 ```
 
-```{r}
+OK, there are a lot of categories here. So, how it looks like?
 
+```{r}
+sort(table(train$category_name), decreasing = TRUE)[1:10]
+```
+OK, there are a lot for women here :). 
+It seems that we have a 3 level of category here, so let us investigate more. Now let us see how cateogries influnce _price_
+
+```{r tidy=TRUE}
+train[, .(median = median(price)), by = category_name][order(median, decreasing = TRUE)][1:30] %>%
+    ggplot(aes(x = reorder(category_name, median), y = median)) + 
+    geom_point(color = 'orangered2') + 
+    coord_flip() + 
+    labs(x = '', y = 'Median price', title = 'Median price by item category (Top 30)') + 
+    scale_y_continuous(labels = scales::dollar)
 ```
 
+As expected, categories are contributing so much into the response variable _price_ with _Vintage & Collectibles_ in the top followed by _kids toys_ !!
+So let us split each category to its level to see how each level contributs in the _price_
+
+```{r tidy=TRUE}
+train[, c("level_1_cat", "level_2_cat",  "level_3_cat") := tstrsplit(train$category_name, split = "/")]
+head(train[, c("level_1_cat", "level_2_cat", "level_3_cat")])
+```
+We can now convert them to factors for easier and better analysis
 ```{r}
+train$level_1_cat <- as.factor(train$level_1_cat)
+train$level_2_cat <- as.factor(train$level_2_cat)
+train$level_3_cat <- as.factor(train$level_3_cat)
+```
+
+Now let us see the statistics of level1
+```{r}
+length(levels(train$level_1_cat))
+table(train$level_1_cat)
+```
+, and level 2
+```{r}
+length(levels(train$level_2_cat))
+table(train$level_2_cat)[1:10]
+```
+
+and the third level
+```{r}
+length(levels(train$level_3_cat))
+table(train$level_3_cat)[1:10]
 ```
 
 ```{r}
