@@ -87,8 +87,8 @@ table(train$item_condition_id)
 We can confirm it more by the following plot
 ```{r tidy=TRUE}
 train[, .N, by = item_condition_id] %>%
-    ggplot(aes(x = item_condition_id, y = N/1000)) +
-    geom_bar(stat = 'identity', fill = 'cyan2') + 
+    ggplot(aes(x = item_condition_id, y = N/1000, fill = item_condition_id)) +
+    geom_bar(stat = 'identity') + 
     labs(x = 'Item condition', y = 'Number of items (000s)', title = 'Number of items by condition category')
 ```
 It seems most of the items are in condition _1_ which is, I do not know there is no ordinal description in the compition. So we do not know if it _1_ is the best or the worst. However, hanks to kaggler @Juraj for pointing out that in fact condition 1 is the best and 5 is the worst. 
@@ -97,8 +97,8 @@ Now, let us compare the _item conditions_ predictor aginst the response variable
 
 ```{r tidy=TRUE}
 train[, .(.N, median_price = median(price)), by = item_condition_id][order(item_condition_id)]
-ggplot(data = train, aes(x = item_condition_id, y = log(price + 1))) + 
-    geom_boxplot(fill = 'cyan2', color = 'darkgrey')
+ggplot(data = train, aes(x = item_condition_id, y = log(price + 1), fill = item_condition_id)) + 
+    geom_boxplot()
 ```
 
 
@@ -183,25 +183,95 @@ train$level_2_cat <- as.factor(train$level_2_cat)
 train$level_3_cat <- as.factor(train$level_3_cat)
 ```
 
-Now let us see the statistics of level1
+Now let us investigate each level
+### level 1
+The statistics of level1
 ```{r}
 length(levels(train$level_1_cat))
 table(train$level_1_cat)
 ```
-, and level 2
+
+So, we have 10 items, let us its relation with _price_
+```{r}
+train %>%
+    ggplot(aes(x = level_1_cat, y = log(price+1), fill = level_1_cat)) + 
+    geom_boxplot(varwidth = TRUE) + 
+    coord_flip() + 
+    labs(x = '', y = 'Log price + 1', title = 'Boxplot of price by top-level category')
+```
+So, we have items with no category but its prices are higher than __Homemade_ items which is the _lowes_ and less than __Men__ items which are surprisingly higher than __Women__ items in average. However, _Women_ items still alot more than any other item.
+
+### level 2
+Statistics of level 2
 ```{r}
 length(levels(train$level_2_cat))
 table(train$level_2_cat)[1:10]
 ```
+We have a lot more subcategories in level 2, let us see their prices.
 
-and the third level
+```{r, fig.height=30, fig.width=20}
+train %>%
+  ggplot(aes(x = level_2_cat, y = log(price+1), fill = level_2_cat)) + 
+  geom_boxplot(varwidth = TRUE) + 
+  coord_flip() + 
+  labs(x = '', y = 'Log price + 1', title = 'Boxplot of price by second-level category') +
+  theme(legend.position="none", plot.title = element_text(size=10))
+
+```
+Still _Women_ and _Kids_ items are at the top. We can also see second level category items distribution against _price_ for specific first level, let us compare between _Men_ and _Women_ items
+
+```{r}
+train %>%
+  filter(level_1_cat =="Men") %>% 
+  ggplot(aes(x = level_2_cat, y = log(price+1), fill = level_2_cat)) + 
+  geom_boxplot(varwidth = TRUE) + 
+  coord_flip() + 
+  labs(x = '', y = 'Log price + 1', title = 'Boxplot of price by second-level category') +
+  theme(legend.position="none", plot.title = element_text(size=10))
+
+```
+
+```{r}
+train %>%
+  filter(level_1_cat =="Women") %>% 
+  ggplot(aes(x = level_2_cat, y = log(price+1), fill = level_2_cat)) + 
+  geom_boxplot(varwidth = TRUE) + 
+  coord_flip() + 
+  labs(x = '', y = 'Log price + 1', title = 'Boxplot of price by second-level category') +
+  theme(legend.position="none", plot.title = element_text(size=10))
+
+```
+It seems Men's shoes and accessories are what _Men_ items are higher than _Women_ items. Otherwise, _Women_ items are more pricy in general.
+
+### level3
+statistics of level3
 ```{r}
 length(levels(train$level_3_cat))
 table(train$level_3_cat)[1:10]
 ```
-
+It will hard to visualize all these data at once, so let us seen what _brands_ are pricy for _Men_ and _Women_ pricy items 
 ```{r}
+train %>%
+  filter(level_1_cat =="Men" & level_2_cat == "Shoes") %>% 
+  ggplot(aes(x = level_3_cat, y = log(price+1), fill = level_3_cat)) + 
+  geom_boxplot(varwidth = TRUE) + 
+  coord_flip() + 
+  labs(x = '', y = 'Log price + 1', title = 'Boxplot of price by second-level category') +
+  theme(legend.position="none", plot.title = element_text(size=10))
 ```
+Ok, we have a lot of men are going to Gym here :).
+
+and for women
+```{r}
+train %>%
+  filter(level_1_cat =="Women" & level_2_cat == "Women's Handbags") %>% 
+  ggplot(aes(x = level_3_cat, y = log(price+1), fill = level_3_cat)) + 
+  geom_boxplot(varwidth = TRUE) + 
+  coord_flip() + 
+  labs(x = '', y = 'Log price + 1', title = 'Boxplot of price by second-level category') +
+  theme(legend.position="none", plot.title = element_text(size=10))
+```
+
 
 # Model Building
 # Conclusion
