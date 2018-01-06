@@ -20,6 +20,7 @@ library(scales) #for plot scaling
 library(stringr) #string operations
 library(quanteda) #text mining
 library(gridExtra) # for plotting many plots in grids
+library(treemapify) # Treemap visualization
 
 ```
 
@@ -170,17 +171,25 @@ train[, .(median = median(price)), by = category_name][order(median, decreasing 
 ```
 
 As expected, categories are contributing so much into the response variable _price_ with _Vintage & Collectibles_ in the top followed by _kids toys_ !!
-So let us split each category to its level to see how each level contributs in the _price_
+So let us split each category to its level to see how each level contributs in the _price_. Thanks to [Abhinav Reddy Kaitha](https://www.kaggle.com/abhinavkaitha) we knew that there are some items with four levels instead of three)
 
 ```{r tidy=TRUE}
-train[, c("level_1_cat", "level_2_cat",  "level_3_cat") := tstrsplit(train$category_name, split = "/")]
-head(train[, c("level_1_cat", "level_2_cat", "level_3_cat")])
+train[, c("level_1_cat", "level_2_cat",  "level_3_cat", "level_4_cat") := tstrsplit(train$category_name, split = "/")]
+head(train[, c("level_1_cat", "level_2_cat", "level_3_cat", "level_4_cat")])
 ```
 We can now convert them to factors for easier and better analysis
 ```{r}
+train[is.na(level_1_cat)]$level_1_cat="NA"
+train[is.na(level_2_cat)]$level_2_cat="NA"
+train[is.na(level_3_cat)]$level_3_cat="NA"
+train[is.na(level_4_cat)]$level_4_cat="NA"
 train$level_1_cat <- as.factor(train$level_1_cat)
 train$level_2_cat <- as.factor(train$level_2_cat)
 train$level_3_cat <- as.factor(train$level_3_cat)
+train$level_4_cat <- as.factor(train$level_4_cat)
+# Full summary
+train %>% summarise(no_Level_1_Items = length(unique(level_1_cat)), no_Level_2_Items = length(unique(level_2_cat)),
+no_Level_3_Items = length(unique(level_3_cat)), no_Level_4_Items = length(unique(level_4_cat)))
 ```
 
 Now let us investigate each level
@@ -242,6 +251,18 @@ train %>%
 
 ```
 It seems Men's shoes and accessories are what _Men_ items are higher than _Women_ items. Otherwise, _Women_ items are more pricy in general.
+
+As a bonus visualization, let us see level 1 and level 2 interaction in different way
+```{r eval=FALSE, echo=FALSE}
+#train[!(is.na(level_1_cat) | is.na((level_2_cat))), .N, by =c("level_1_cat", "level_2_cat")] %>%
+#ggplot(aes(area=n, fill=level_1_cat, label=level_2_cat, subgroup=level_1_cat)) +
+#geom_treemap() +
+#geom_treemap_subgroup_text(grow = T, alpha = 0.5, colour =
+ #                          "black", fontface = "italic", min.size = 0) +
+#geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+#theme(legend.position = "null") +
+#ggtitle("1st and 2nd Hierarchical Category Levels")
+```
 
 ### level3
 statistics of level3
@@ -347,7 +368,6 @@ data.frame(term = names(tf), freq = unname(tf)) %>%
 It seems that there are care about the item condition, size, shipping and brand. Let us create a word cloud to see different point of view :)
 
 ```{r}
-set.seed(100)
 textplot_wordcloud(dfm, min.freq = 3e4, random.order = FALSE,
                    rot.per = .25, 
                    colors = RColorBrewer::brewer.pal(8,"Dark2"))
@@ -440,7 +460,8 @@ OK, altough men items are the highest but there are no much description for thes
 # Model Building
 # Conclusion
 # Credit
-[Troy Walters](https://www.kaggle.com/captcalculator)
+* [Troy Walters](https://www.kaggle.com/captcalculator)
+* [Lingzhi](https://www.kaggle.com/vrtjso)
 
 # eBay acronyms
 A-E
