@@ -31,7 +31,8 @@ Mercari’s [challenge](https://www.kaggle.com/c/mercari-price-suggestion-challe
 ## Data overview
 * Load training data
 ```{r loadData, message = FALSE, warning = FALSE, tidy = TRUE}
-train <- fread("Mercari-Price-Suggestion-Challenge/data/train.tsv", sep = "\t", stringsAsFactors = FALSE, showProgress = FALSE)
+train <- fread("data/train.tsv", sep = "\t", stringsAsFactors = FALSE,
+               showProgress = FALSE)
 ```
 
 * Inspect structure
@@ -42,24 +43,24 @@ At the first glance, excluding the *train_id* column, the numeric data are only 
 
 ## Price (The response/target variable)
 Let’s start with an analysis of the response0 variable: price. First, the range of item prices:
-```{r}
+```{r price_summary}
 summary(train$price)
 ```
 It seems there are items are givem as gifts (min. is 0), and we have a few very expensive items as well.
 Let us visualize it for more clear picture
-```{r}
+```{r price_hist, warning=FALSE, message=FALSE}
 ggplot(data = train, aes(x = price)) + 
-    geom_histogram(fill = 'darkblue') +
-    labs(title = 'Histogram of price')
+  geom_histogram(fill = 'darkblue') +
+  labs(title = 'Histogram of price')
 ```
 It seems because we have a very expensive items (and very view) we will need to take the log for better analysis
-```{r}
+```{r log_price, message=FALSE, warning=FALSE}
 ggplot(data = train, aes(x = log(price))) + 
-    geom_histogram(fill = 'darkblue') +
-    labs(title = 'Histogram of log item price')
+  geom_histogram(fill = 'darkblue') +
+  labs(title = 'Histogram of log item price')
 ```
 Now, it is much better and clear, but it seems taking log of prices made the free/gift items to be omitted, as taking log for 0 is undefined, so we will have to add a dummy 1 to include it with us in the plot, consider it a tax :P .
-```{r}
+```{r log_price_1_hist, message=FALSE}
 ggplot(data = train, aes(x = log(price + 1))) + 
     geom_histogram(fill = 'darkblue') +
     labs(title = 'Histogram of log item price + 1') +
@@ -68,38 +69,42 @@ ggplot(data = train, aes(x = log(price + 1))) +
 ```
 So, finally we have the gift/free items in the plot and it seems like an outlier along with the pricy data, as we have a nearly normal distibution for the prices. Let us investigate the distribution more. 
 It seems the data is centered between 3 and 7, as also the following statistics confirm.
-```{r}
+```{r log_price_1_summary}
 summary(log(train$price + 1))
 
 ```
 ## Item Condition
 Item condition is a factor data, so let us convert it to a factor first.
 
-```{r}
+```{r item_condition_factor}
 #item condition factor
 train$item_condition_id <- as.factor(train$item_condition_id)
 levels(train$item_condition_id)
 ```
 Now, let us see the statistics summary of items conditions
-```{r}
+```{r item_condition_factor_table}
 table(train$item_condition_id)
 ```
 
 We can confirm it more by the following plot
-```{r tidy=TRUE}
+```{r item_condition_factor_plot, tidy=TRUE}
 train[, .N, by = item_condition_id] %>%
-    ggplot(aes(x = item_condition_id, y = N/1000, fill = item_condition_id)) +
-    geom_bar(stat = 'identity') + 
-    labs(x = 'Item condition', y = 'Number of items (000s)', title = 'Number of items by condition category')
+  ggplot(aes(x = item_condition_id, y = N/1000, fill = item_condition_id)) +
+  geom_bar(stat = 'identity') + 
+  labs(x = 'Item condition', y = 'Number of items (000s)',
+        title = 'Number of items by condition category')
 ```
 It seems most of the items are in condition _1_ which is, I do not know there is no ordinal description in the compition. So we do not know if it _1_ is the best or the worst. However, hanks to kaggler @Juraj for pointing out that in fact condition 1 is the best and 5 is the worst. 
 
 Now, let us compare the _item conditions_ predictor aginst the response variable _price_
 
-```{r tidy=TRUE}
-train[, .(.N, median_price = median(price)), by = item_condition_id][order(item_condition_id)]
-ggplot(data = train, aes(x = item_condition_id, y = log(price + 1), fill = item_condition_id)) + 
-    geom_boxplot()
+```{r item_condition_price_plot, tidy=TRUE}
+train[, .(.N, median_price = median(price)), 
+      by = item_condition_id][order(item_condition_id)]
+
+ggplot(data = train, aes(x = item_condition_id, y = log(price + 1), 
+                         fill = item_condition_id)) + 
+  geom_boxplot()
 ```
 
 
@@ -110,38 +115,40 @@ It seems that item condition is not the main contributor to the price as the bes
 It is the second numeric facotr predictor. It is simply _1_ when shipping item is paied by the seller and _0_ otherwise.
 Let us convert it to a facotr and see its statistics
 
-```{r}
-#shupping
+```{r shipping}
+#shipping
 train$shipping <- as.factor(train$shipping)
 levels(train$shipping)
 table(train$shipping)
 ```
 It does not seem contributing that much to the reponse variable, so let us investigate its relation with the _price_
 
-```{r}
+```{r shipping_plot}
 train %>%
     ggplot(aes(x = log(price+1), fill = shipping)) + 
     geom_density(adjust = 2, alpha = 0.6) + 
     labs(x = 'Log price', y = '', title = 'log(price) vs. shipping')
 ```
 It seems that if you are going to pay for the shipping you will have a little lower price, but not that much right !!
-# Brand
+
+## Brand
 Clearly the two numeric predictor factors are not contributing so much into the response variable.
 How many brands we have?
-```{r}
+
+```{r brand}
 length(unique(train$brand_name))
 
 ```
 Wow, that is a lot. So, let us try to investigate the text predictors and begin with the _brand_ predictor.
 
-```{r}
+```{r brand_plot}
 train[, .(median_price = median(price)), by = brand_name] %>%
-    head(25) %>%
-    ggplot(aes(x = reorder(brand_name, median_price), y = median_price)) + 
-    geom_point(color = 'cyan2') + 
-    scale_y_continuous(labels = scales::dollar) + 
-    coord_flip() +
-    labs(x = '', y = 'Median price', title = 'Top 25 most expensive brands') 
+  head(25) %>%
+  ggplot(aes(x = reorder(brand_name, median_price), y = median_price)) + 
+  geom_point(color = 'cyan2') + 
+  scale_y_continuous(labels = scales::dollar) + 
+  coord_flip() +
+  labs(x = '', y = 'Median price', title = 'Top 25 most expensive brands') 
 
 ```
 OK, finally we have a strongly contributer predictor. It seems that brands affect prices as it should be.
@@ -149,59 +156,66 @@ OK, finally we have a strongly contributer predictor. It seems that brands affec
 ## Item Categories
 Now it is _item categories_ turn, we expect a lot from this variable. Let us begin by see how many categoris are there? 
 
-```{r}
+```{r item_categories}
 length(unique(train$category_name))
 ```
 
 OK, there are a lot of categories here. So, how it looks like?
 
-```{r}
+```{r item_categories_name}
 sort(table(train$category_name), decreasing = TRUE)[1:10]
 ```
 OK, there are a lot for women here :). 
 It seems that we have a 3 level of category here, so let us investigate more. Now let us see how cateogries influnce _price_
 
-```{r tidy=TRUE}
-train[, .(median = median(price)), by = category_name][order(median, decreasing = TRUE)][1:30] %>%
-    ggplot(aes(x = reorder(category_name, median), y = median)) + 
-    geom_point(color = 'orangered2') + 
-    coord_flip() + 
-    labs(x = '', y = 'Median price', title = 'Median price by item category (Top 30)') + 
-    scale_y_continuous(labels = scales::dollar)
+```{r item_categories_price_plot, tidy=TRUE, fig.align='left', fig.width=8}
+train[, .(median = median(price)), by = category_name][
+  order(median, decreasing = TRUE)][1:30] %>%
+  ggplot(aes(x = reorder(category_name, median),
+             y = median)) + 
+  geom_point(color = 'orangered2') + 
+  coord_flip() + 
+  labs(x = '', y = 'Median price',
+       title = 'Median price by item category (Top 30)') + 
+  scale_y_continuous(labels = scales::dollar)
 ```
 
 As expected, categories are contributing so much into the response variable _price_ with _Vintage & Collectibles_ in the top followed by _kids toys_ !!
-So let us split each category to its level to see how each level contributs in the _price_. Thanks to [Abhinav Reddy Kaitha](https://www.kaggle.com/abhinavkaitha) we knew that there are some items with four levels instead of three)
+So let us split each category to its level to see how each level contributs in the _price_. Thanks to [Abhinav Reddy Kaitha](https://www.kaggle.com/abhinavkaitha) we knew that there are some items with four levels instead of three). However, after running data itseems we have even a more level so we have 5 levels in total
 
-```{r tidy=TRUE}
-train[, c("level_1_cat", "level_2_cat",  "level_3_cat", "level_4_cat") := tstrsplit(train$category_name, split = "/")]
-head(train[, c("level_1_cat", "level_2_cat", "level_3_cat", "level_4_cat")])
+```{r category_levels, tidy=TRUE}
+train[, c("level_1_cat", "level_2_cat",  "level_3_cat",
+          "level_4_cat", "level_5_cat") := tstrsplit(train$category_name,
+                                                     split = "/")]
+head(train[, c("level_1_cat", "level_2_cat", "level_3_cat", "level_4_cat", "level_5_cat")])
 ```
 We can now convert them to factors for easier and better analysis
-```{r}
-train[is.na(level_1_cat)]$level_1_cat="NA"
-train[is.na(level_2_cat)]$level_2_cat="NA"
-train[is.na(level_3_cat)]$level_3_cat="NA"
-train[is.na(level_4_cat)]$level_4_cat="NA"
+```{r levels_factor}
 train$level_1_cat <- as.factor(train$level_1_cat)
 train$level_2_cat <- as.factor(train$level_2_cat)
 train$level_3_cat <- as.factor(train$level_3_cat)
 train$level_4_cat <- as.factor(train$level_4_cat)
+train$level_5_cat <- as.factor(train$level_5_cat)
 # Full summary
-train %>% summarise(no_Level_1_Items = length(unique(level_1_cat)), no_Level_2_Items = length(unique(level_2_cat)),
-no_Level_3_Items = length(unique(level_3_cat)), no_Level_4_Items = length(unique(level_4_cat)))
+train %>% summarise(no_Level_1_Items = length(unique(level_1_cat)),
+                    no_Level_2_Items = length(unique(level_2_cat)),
+                    no_Level_3_Items = length(unique(level_3_cat)),
+                    no_Level_4_Items = length(unique(level_4_cat)),
+                    no_Level_5_Items = length(unique(level_5_cat)))
 ```
 
 Now let us investigate each level
+
 ### level 1
+
 The statistics of level1
-```{r}
+```{r level_1_cat}
 length(levels(train$level_1_cat))
 table(train$level_1_cat)
 ```
 
 So, we have 10 items, let us its relation with _price_
-```{r}
+```{r level_1_cat_plot}
 train %>%
     ggplot(aes(x = level_1_cat, y = log(price+1), fill = level_1_cat)) + 
     geom_boxplot(varwidth = TRUE) + 
@@ -212,13 +226,13 @@ So, we have items with no category but its prices are higher than __Homemade_ it
 
 ### level 2
 Statistics of level 2
-```{r}
+```{r level_2_cat}
 length(levels(train$level_2_cat))
 table(train$level_2_cat)[1:10]
 ```
 We have a lot more subcategories in level 2, let us see their prices.
 
-```{r, fig.height=30, fig.width=20}
+```{r level_2_cat_plot, fig.height=40, fig.width=15}
 train %>%
   ggplot(aes(x = level_2_cat, y = log(price+1), fill = level_2_cat)) + 
   geom_boxplot(varwidth = TRUE) + 
@@ -229,7 +243,7 @@ train %>%
 ```
 Still _Women_ and _Kids_ items are at the top. We can also see second level category items distribution against _price_ for specific first level, let us compare between _Men_ and _Women_ items
 
-```{r}
+```{r men}
 train %>%
   filter(level_1_cat =="Men") %>% 
   ggplot(aes(x = level_2_cat, y = log(price+1), fill = level_2_cat)) + 
@@ -240,7 +254,7 @@ train %>%
 
 ```
 
-```{r}
+```{r women}
 train %>%
   filter(level_1_cat =="Women") %>% 
   ggplot(aes(x = level_2_cat, y = log(price+1), fill = level_2_cat)) + 
@@ -264,14 +278,14 @@ As a bonus visualization, let us see level 1 and level 2 interaction in differen
 #ggtitle("1st and 2nd Hierarchical Category Levels")
 ```
 
-### level3
+### level 3
 statistics of level3
-```{r}
+```{r level_3_cat}
 length(levels(train$level_3_cat))
 table(train$level_3_cat)[1:10]
 ```
 It will hard to visualize all these data at once, so let us seen what _brands_ are pricy for _Men_ and _Women_ pricy items 
-```{r}
+```{r shoes}
 train %>%
   filter(level_1_cat =="Men" & level_2_cat == "Shoes") %>% 
   ggplot(aes(x = level_3_cat, y = log(price+1), fill = level_3_cat)) + 
@@ -283,7 +297,7 @@ train %>%
 Ok, we have a lot of men are going to Gym here :).
 
 and for women
-```{r}
+```{r handbags}
 train %>%
   filter(level_1_cat =="Women" & level_2_cat == "Women's Handbags") %>% 
   ggplot(aes(x = level_3_cat, y = log(price+1), fill = level_3_cat)) + 
@@ -294,7 +308,7 @@ train %>%
 ```
 
 We can examine how item counts are distributed across top-level category and condition.
-```{r}
+```{r level_1_cat_condition_price}
 p1 <-
     train[, .N, by = c('level_1_cat', 'item_condition_id')] %>%
     ggplot(aes(x = item_condition_id, y = level_1_cat, fill = N/1000)) +
@@ -322,7 +336,7 @@ Ok. It seems textaul predictors have a much greater influnce over response varia
 ## Item Description
 Before start working on our `corpus` objects, let us neturalize ___No description yet___ value from _item description_ predictor to not affect our text analysis
 
-```{r}
+```{r description_corpus}
 train[item_description == 'No description yet', item_description := NA]
 
 # create the corpus object from the item_description column
@@ -334,15 +348,16 @@ summary(corpus)[1:5, ]
 
 Let us see some of these documents in action using `kwic` function and one of the phrases like _great condition_
 
-```{r}
+```{r great_condition}
 kwic(corpus, phrase("great condition"), valuetype = "fixed") %>%
     head()
 ```
-OK, that was some informatice samples to word in context. 
-## N Gram 1
+OK, that was some informatice samples to word in context.
+
+### N Gram 1
 So, let us proceed to the next step and calculate DTM(_Doment-to-Term-Matrix_), we remove remove english stopwords and punctuation, and stem words. To find first the most top single words
 
-```{r}
+```{r ngram_1}
 dfm <- dfm(
     corpus, 
     ngrams = 1, 
@@ -353,12 +368,12 @@ dfm <- dfm(
 ```
 
 Let us investigate the resultant document. First, let us get the 25 most common words
-```{r}
+```{r top_25}
 tf <- topfeatures(dfm, n = 25)
 ```
 
 Now, let us visualize it
-```{r}
+```{r top_25_plot}
 data.frame(term = names(tf), freq = unname(tf)) %>%
     ggplot(aes(x = reorder(term, freq), y = freq/1000)) + 
     geom_bar(stat = 'identity', fill = 'orangered2') + 
@@ -367,19 +382,20 @@ data.frame(term = names(tf), freq = unname(tf)) %>%
 ```
 It seems that there are care about the item condition, size, shipping and brand. Let us create a word cloud to see different point of view :)
 
-```{r}
+```{r ngram_1_word_cloud}
 textplot_wordcloud(dfm, min.freq = 3e4, random.order = FALSE,
                    rot.per = .25, 
                    colors = RColorBrewer::brewer.pal(8,"Dark2"))
 ```
 Ok, it is a confirmation.
 
-## N Gram 2
+### N Gram 2
 What about the most popular 2 words
 
-```{r}
+```{r ngram_2}
 dfm2 <- corpus %>%
-    corpus_sample(size = floor(ndoc(corpus) * 0.15)) %>% #to reduce the amound of data for performance issue
+   #to reduce the amound of data for performance issue
+    corpus_sample(size = floor(ndoc(corpus) * 0.15)) %>%
     dfm(
         ngrams = 2,
         ignoredFeatures = c("rm", stopwords("english")),
@@ -394,7 +410,8 @@ tf <- topfeatures(dfm2, n = 25)
 data.frame(term = names(tf), freq = unname(tf)) %>%
     ggplot(aes(x = reorder(term, freq), y = freq/1000)) + 
     geom_bar(stat = 'identity', fill = 'orangered2') + 
-    labs(x = '', y = 'Frequency (000s)', title = '25 most common description bigrams') + 
+    labs(x = '', y = 'Frequency (000s)', 
+         title = '25 most common description bigrams') + 
     coord_flip() 
 ```
 The results seem simirlar to the single phrase results. Let us confirm this by word cloud
@@ -405,11 +422,11 @@ textplot_wordcloud(dfm2, min.freq = 2000, random.order = FALSE,
 ```
 It is confirmed.
 
-## N Grams 3
+### N Grams 3
 What about 3 phrases
-```{r}
+```{r ngram_3}
 dfm3 <- corpus %>%
-    corpus_sample(size = floor(ndoc(corpus) * 0.15)) %>%
+    corpus_sample(size = floor(ndoc(corpus) * 0.25)) %>%
     dfm(
         ngrams = 3,
         ignoredFeatures = c("rm", stopwords("english")),
@@ -430,14 +447,14 @@ data.frame(term = names(tf), freq = unname(tf)) %>%
 
 Ok, now we knew what _free_ word is used for :D. Now, let us confirm this by a word cloud.
 
-```{r Warning = TRUE}
-textplot_wordcloud(dfm3, min.freq = 100, random.order = FALSE,
-                   rot.per = .25, 
-                   colors = RColorBrewer::brewer.pal(8,"Dark2"))
+```{r Warning = FALSE, error=FALSE, message=FALSE}
+#textplot_wordcloud(dfm3, min.freq = 1000, random.order = FALSE,
+ #                  rot.per = .50, 
+  #                 colors = RColorBrewer::brewer.pal(8,"Dark2"))
 ```
 
 Let us see the _level 1 category_ in the documents
-```{r}
+```{r level_1_cat_desc}
 docvars(corpus, "level_1_cat") <- train$level_1_cat
 p1 <- summary(corpus) %>%
   ggplot(aes(x = level_1_cat, y = Tokens)) +
@@ -457,6 +474,7 @@ p2 <- summary(corpus) %>%
 grid.arrange(p1, p2, ncol = 2)
 ```
 OK, altough men items are the highest but there are no much description for these items, it seems predicting these items will not be so much easy.
+
 # Model Building
 # Conclusion
 # Credit
