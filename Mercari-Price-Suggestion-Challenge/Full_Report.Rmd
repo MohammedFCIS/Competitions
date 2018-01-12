@@ -184,24 +184,27 @@ As expected, categories are contributing so much into the response variable _pri
 So let us split each category to its level to see how each level contributs in the _price_. Thanks to [Abhinav Reddy Kaitha](https://www.kaggle.com/abhinavkaitha) we knew that there are some items with four levels instead of three). However, after running data itseems we have even a more level so we have 5 levels in total
 
 ```{r category_levels, tidy=TRUE}
+splitted_categ <- str_split_fixed(train$category_name,
+                                  "/", 5)
 train[, c("level_1_cat", "level_2_cat",  "level_3_cat",
-          "level_4_cat", "level_5_cat") := tstrsplit(train$category_name,
-                                                     split = "/")]
-head(train[, c("level_1_cat", "level_2_cat", "level_3_cat", "level_4_cat", "level_5_cat")])
+          "level_4_cat", "level_5_cat") := .(splitted_categ[,1], splitted_categ[,2], splitted_categ[,3], splitted_categ[,4], splitted_categ[,5])]
+
+train %>% summarise(Num_Cat1 = length(unique(level_1_cat)), Num_Cat2 = length(unique(level_2_cat)),
+Num_Cat3 = length(unique(level_3_cat)), Num_Cat4 = length(unique(level_4_cat)), Num_Cat5 = length(unique(level_5_cat)))
 ```
 We can now convert them to factors for easier and better analysis
 ```{r levels_factor}
-train$level_1_cat <- as.factor(train$level_1_cat)
-train$level_2_cat <- as.factor(train$level_2_cat)
-train$level_3_cat <- as.factor(train$level_3_cat)
-train$level_4_cat <- as.factor(train$level_4_cat)
-train$level_5_cat <- as.factor(train$level_5_cat)
+#train$level_1_cat <- as.factor(train$level_1_cat)
+#train$level_2_cat <- as.factor(train$level_2_cat)
+#train$level_3_cat <- as.factor(train$level_3_cat)
+#train$level_4_cat <- as.factor(train$level_4_cat)
+#train$level_5_cat <- as.factor(train$level_5_cat)
 # Full summary
-train %>% summarise(no_Level_1_Items = length(unique(level_1_cat)),
-                    no_Level_2_Items = length(unique(level_2_cat)),
-                    no_Level_3_Items = length(unique(level_3_cat)),
-                    no_Level_4_Items = length(unique(level_4_cat)),
-                    no_Level_5_Items = length(unique(level_5_cat)))
+#train %>% summarise(no_Level_1_Items = length(unique(level_1_cat)),
+ #                   no_Level_2_Items = length(unique(level_2_cat)),
+  #                  no_Level_3_Items = length(unique(level_3_cat)),
+   #                 no_Level_4_Items = length(unique(level_4_cat)),
+    #                no_Level_5_Items = length(unique(level_5_cat)))
 ```
 
 Now let us investigate each level
@@ -232,7 +235,7 @@ table(train$level_2_cat)[1:10]
 ```
 We have a lot more subcategories in level 2, let us see their prices.
 
-```{r level_2_cat_plot, fig.height=40, fig.width=15}
+```{r level_2_cat_plot, fig.height=30, fig.width=10}
 train %>%
   ggplot(aes(x = level_2_cat, y = log(price+1), fill = level_2_cat)) + 
   geom_boxplot(varwidth = TRUE) + 
@@ -268,14 +271,14 @@ It seems Men's shoes and accessories are what _Men_ items are higher than _Women
 
 As a bonus visualization, let us see level 1 and level 2 interaction in different way
 ```{r eval=FALSE, echo=FALSE}
-#train[!(is.na(level_1_cat) | is.na((level_2_cat))), .N, by =c("level_1_cat", "level_2_cat")] %>%
-#ggplot(aes(area=n, fill=level_1_cat, label=level_2_cat, subgroup=level_1_cat)) +
-#geom_treemap() +
-#geom_treemap_subgroup_text(grow = T, alpha = 0.5, colour =
- #                          "black", fontface = "italic", min.size = 0) +
-#geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
-#theme(legend.position = "null") +
-#ggtitle("1st and 2nd Hierarchical Category Levels")
+train[, .N, by= .(level_1_cat, level_2_cat)] %>% 
+ggplot(aes(area=N, fill=level_1_cat, label=level_2_cat, subgroup=level_1_cat)) +
+geom_treemap() +
+geom_treemap_subgroup_text(grow = T, alpha = 0.5, colour =
+                           "black", fontface = "italic", min.size = 0) +
+geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+theme(legend.position = "null") +
+ggtitle("1st and 2nd Hierarchical Category Levels")
 ```
 
 ### level 3
@@ -286,8 +289,7 @@ table(train$level_3_cat)[1:10]
 ```
 It will hard to visualize all these data at once, so let us seen what _brands_ are pricy for _Men_ and _Women_ pricy items 
 ```{r shoes}
-train %>%
-  filter(level_1_cat =="Men" & level_2_cat == "Shoes") %>% 
+train[level_1_cat =="Men" & level_2_cat == "Shoes"] %>% 
   ggplot(aes(x = level_3_cat, y = log(price+1), fill = level_3_cat)) + 
   geom_boxplot(varwidth = TRUE) + 
   coord_flip() + 
@@ -296,16 +298,42 @@ train %>%
 ```
 Ok, we have a lot of men are going to Gym here :).
 
+Let us see the distribution in a different way
+```{r men_items}
+train[level_1_cat =="Men", .N, by = .(level_2_cat, level_3_cat)] %>% 
+  ggplot(aes(area=N, fill=level_2_cat, label=level_3_cat, subgroup=level_2_cat)) +
+  geom_treemap() +
+  geom_treemap_subgroup_text(grow = T, alpha = 0.5, colour =
+                             "black", fontface = "italic", min.size = 0) +
+  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  theme(legend.position = "null") +
+  ggtitle("2nd and 3rd Hierarchical Category Levels Under Men")
+```
+
 and for women
 ```{r handbags}
-train %>%
-  filter(level_1_cat =="Women" & level_2_cat == "Women's Handbags") %>% 
+train[level_1_cat =="Women" & level_2_cat == "Women's Handbags"] %>% 
   ggplot(aes(x = level_3_cat, y = log(price+1), fill = level_3_cat)) + 
   geom_boxplot(varwidth = TRUE) + 
   coord_flip() + 
   labs(x = '', y = 'Log price + 1', title = 'Boxplot of price by second-level category') +
   theme(legend.position="none", plot.title = element_text(size=10))
 ```
+
+Now, let us see the items distribution under women in different way
+```{r}
+train[level_1_cat =="Women", .N, by = .(level_2_cat, level_3_cat)] %>% 
+  ggplot(aes(area=N, fill=level_2_cat, label=level_3_cat, subgroup=level_2_cat)) +
+  geom_treemap() +
+  geom_treemap_subgroup_text(grow = T, alpha = 0.5, colour =
+                             "black", fontface = "italic", min.size = 0) +
+  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  theme(legend.position = "null") +
+  ggtitle("2nd and 3rd Hierarchical Category Levels Under Women")
+```
+### Relations with other items
+
+#### with Item Condition
 
 We can examine how item counts are distributed across top-level category and condition.
 ```{r level_1_cat_condition_price}
@@ -330,6 +358,31 @@ p2 <-
 grid.arrange(p1, p2, ncol = 2)
 ```
 Women’s items of condition 1,2, and 3 are the most numerous. This is followed by Beauty products. `
+
+#### with Brands
+```{r levels_brands}
+train[, has_brand := (brand_name!='')] %>% 
+  ggplot(aes(x=level_1_cat, fill=has_brand)) +
+  geom_bar(position='fill') +
+  theme(axis.text.x=element_text(angle=15, hjust=1, size=8)) +
+  xlab('1st Categories') +
+  ylab('Proportion') +
+  ggtitle('Items With and Without Brands')
+```
+
+top 10 brands
+
+```{r top_brands}
+top10 <- train[brand_name !="", .N, by = .(bName = brand_name)][order(N, decreasing = T)][1:10]
+
+train[brand_name %in% top10$bName] %>%
+  ggplot(aes(x=factor(brand_name, levels=rev(top10$bName)), fill=level_1_cat)) +
+  geom_bar(width=0.5) +
+  coord_flip() +
+  xlab('brand') +
+  labs(fill='1st Category') +
+  ggtitle('Top 10 Brands and Their Categories')
+```
 
 Ok. It seems textaul predictors have a much greater influnce over response variable than the numric ones. Therefore, we expect to get a lot from the last textual predictor _item description_.
 
