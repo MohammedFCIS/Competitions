@@ -528,6 +528,55 @@ grid.arrange(p1, p2, ncol = 2)
 ```
 OK, altough men items are the highest but there are no much description for these items, it seems predicting these items will not be so much easy.
 
+## Names
+```{r names}
+length(unique(train$name))
+```
+Names and brands and conditions
+
+```{r}
+p1 <- train[level_1_cat != ""][, cat_in_name := (str_detect(name, level_3_cat))] %>% 
+  ggplot(aes(x=level_1_cat, fill=cat_in_name)) +
+  geom_bar(position='fill') +
+  theme(axis.text.x=element_text(angle=30, hjust=1, size=8)) +
+  xlab('1st Categories') +
+  ylab('Proportion') +
+  ggtitle('3rd Category Appears in Item Name')
+
+p2 <- train[train$has_brand][,brand_in_name := (str_detect(name, brand_name))] %>%
+  ggplot(aes(x=level_1_cat, fill=brand_in_name)) +
+  geom_bar(position='fill') +
+  theme(axis.text.x=element_text(angle=30, hjust=1, size=8)) +
+  xlab('1st Categories') +
+  ylab('Proportion') +
+  ggtitle('Brand Appears in Item Name')
+  
+grid.arrange(p1, p2, ncol=1)
+```
+
+top10
+```{r}
+train[brand_name %in% top10$bName][, top_brand_in_name := (str_detect(name, brand_name))] %>% 
+  ggplot(aes(x=factor(brand_name, levels=top10$bName), fill=top_brand_in_name)) +
+  geom_bar(position='fill') +
+  theme(axis.text.x=element_text(angle=30, hjust=1, size=8)) +
+  xlab('1st Categories') +
+  ylab('Proportion') +
+  ggtitle('Brand Appears in Item Name (By Top 10 Brands)')
+```
+
+brand vs price vs categ
+
+```{r brand_price_categ}
+train %>%
+ggplot(aes(x=level_1_cat, y=log(price) + 1, fill=has_brand)) +
+geom_boxplot(outlier.size=0.1) +
+ggtitle('Boxplot of Log Price versus 1st Category') +
+xlab('1st Category') +
+theme(axis.text.x=element_text(angle=15, hjust=1))
+```
+
+
 # Model Building
 # Conclusion
 # Credit
