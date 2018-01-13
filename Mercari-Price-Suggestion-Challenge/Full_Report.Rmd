@@ -25,12 +25,12 @@ library(treemapify) # Treemap visualization
 ```
 
 # About
-Mercari’s [challenge](https://www.kaggle.com/c/mercari-price-suggestion-challenge) is to build an algorithm that automatically suggests the right product prices. You’ll be provided user-inputted text descriptions of their products, including details like product category name, brand name, and item condition.
+Mercari’s [challenge](https://www.kaggle.com/c/mercari-price-suggestion-challenge) is to build an algorithm that automatically suggests the right product prices. We are provided with user-inputted text descriptions of their products, including details like product category name, brand name, and item condition.
 
 # Exploratory Data Analysis
 ## Data overview
 * Load training data
-```{r loadData, message = FALSE, warning = FALSE, tidy = TRUE}
+```{r loadData, message = FALSE, warning = FALSE}
 train <- fread("data/train.tsv", sep = "\t", stringsAsFactors = FALSE,
                showProgress = FALSE)
 ```
@@ -46,6 +46,7 @@ Let’s start with an analysis of the response0 variable: price. First, the rang
 ```{r price_summary}
 summary(train$price)
 ```
+
 It seems there are items are givem as gifts (min. is 0), and we have a few very expensive items as well.
 Let us visualize it for more clear picture
 ```{r price_hist, warning=FALSE, message=FALSE}
@@ -53,7 +54,8 @@ ggplot(data = train, aes(x = price)) +
   geom_histogram(fill = 'darkblue') +
   labs(title = 'Histogram of price')
 ```
-It seems because we have a very expensive items (and very view) we will need to take the log for better analysis
+It seems because we have a very expensive items (and a very few of them) we will need to take the log for better analysis
+
 ```{r log_price, message=FALSE, warning=FALSE}
 ggplot(data = train, aes(x = log(price))) + 
   geom_histogram(fill = 'darkblue') +
@@ -165,12 +167,11 @@ OK, there are a lot of categories here. So, how it looks like?
 ```{r item_categories_name}
 sort(table(train$category_name), decreasing = TRUE)[1:10]
 ```
-OK, there are a lot for women here :). 
+OK, there are a lot women items here :). 
 It seems that we have a 3 level of category here, so let us investigate more. Now let us see how cateogries influnce _price_
 
-```{r item_categories_price_plot, tidy=TRUE, fig.align='left', fig.width=8}
-train[, .(median = median(price)), by = category_name][
-  order(median, decreasing = TRUE)][1:30] %>%
+```{r item_categories_price_plot, fig.align='left', fig.width=8}
+train[, .(median = median(price)), by = category_name][order(median, decreasing = TRUE)][1:30] %>%
   ggplot(aes(x = reorder(category_name, median),
              y = median)) + 
   geom_point(color = 'orangered2') + 
@@ -181,30 +182,19 @@ train[, .(median = median(price)), by = category_name][
 ```
 
 As expected, categories are contributing so much into the response variable _price_ with _Vintage & Collectibles_ in the top followed by _kids toys_ !!
+
 So let us split each category to its level to see how each level contributs in the _price_. Thanks to [Abhinav Reddy Kaitha](https://www.kaggle.com/abhinavkaitha) we knew that there are some items with four levels instead of three). However, after running data itseems we have even a more level so we have 5 levels in total
 
-```{r category_levels, tidy=TRUE}
+```{r category_levels, message=FALSE, warning=FALSE}
 splitted_categ <- str_split_fixed(train$category_name,
                                   "/", 5)
 train[, c("level_1_cat", "level_2_cat",  "level_3_cat",
-          "level_4_cat", "level_5_cat") := .(splitted_categ[,1], splitted_categ[,2], splitted_categ[,3], splitted_categ[,4], splitted_categ[,5])]
+          "level_4_cat", "level_5_cat") := .(splitted_categ[,1],
+                                             splitted_categ[,2], splitted_categ[,3],
+                                             splitted_categ[,4], splitted_categ[,5])]
 
 train %>% summarise(Num_Cat1 = length(unique(level_1_cat)), Num_Cat2 = length(unique(level_2_cat)),
 Num_Cat3 = length(unique(level_3_cat)), Num_Cat4 = length(unique(level_4_cat)), Num_Cat5 = length(unique(level_5_cat)))
-```
-We can now convert them to factors for easier and better analysis
-```{r levels_factor}
-#train$level_1_cat <- as.factor(train$level_1_cat)
-#train$level_2_cat <- as.factor(train$level_2_cat)
-#train$level_3_cat <- as.factor(train$level_3_cat)
-#train$level_4_cat <- as.factor(train$level_4_cat)
-#train$level_5_cat <- as.factor(train$level_5_cat)
-# Full summary
-#train %>% summarise(no_Level_1_Items = length(unique(level_1_cat)),
- #                   no_Level_2_Items = length(unique(level_2_cat)),
-  #                  no_Level_3_Items = length(unique(level_3_cat)),
-   #                 no_Level_4_Items = length(unique(level_4_cat)),
-    #                no_Level_5_Items = length(unique(level_5_cat)))
 ```
 
 Now let us investigate each level
@@ -225,7 +215,65 @@ train %>%
     coord_flip() + 
     labs(x = '', y = 'Log price + 1', title = 'Boxplot of price by top-level category')
 ```
-So, we have items with no category but its prices are higher than __Homemade_ items which is the _lowes_ and less than __Men__ items which are surprisingly higher than __Women__ items in average. However, _Women_ items still alot more than any other item.
+So, we have items with no category but its prices are higher than __Homemade__ items which is the _lowes_ and less than __Men__ items which are surprisingly higher than __Women__ items in average. However, _Women_ items still alot more than any other item.
+
+
+#### Relations with other items
+
+##### with Item Condition
+
+We can examine how item counts are distributed across top-level category and condition.
+```{r level_1_cat_condition_price}
+p1 <-
+    train[, .N, by = c('level_1_cat', 'item_condition_id')] %>%
+    ggplot(aes(x = item_condition_id, y = level_1_cat, fill = N/1000)) +
+    geom_tile() +
+    scale_fill_gradient(low = 'lightblue', high = 'cyan4') +
+    labs(x = 'Condition', y = '', fill = 'Number of items (000s)',
+         title = 'Item count by category and condition') +
+    theme_bw() + 
+    theme(legend.position = 'bottom')
+    
+p2 <-
+    train[, .(median_price = median(price)), 
+          by = c('level_1_cat', 'item_condition_id')] %>%
+    ggplot(aes(x = item_condition_id, y = level_1_cat, fill = median_price)) +
+    geom_tile() +
+    scale_fill_gradient(low = 'lightblue', high = 'cyan4', labels = dollar) +
+    labs(x = 'Condition', y = '', fill = 'Median price',
+         title = 'Item price by category and condition') + 
+    theme_bw() + 
+    theme(legend.position = 'bottom', axis.text.y = element_blank())
+    
+grid.arrange(p1, p2, ncol = 2)
+```
+Women’s items of condition 1,2, and 3 are the most numerous. This is followed by Beauty products. `
+
+##### with Brands
+```{r levels_brands}
+train[, has_brand := (brand_name!='')] %>% 
+  ggplot(aes(x=level_1_cat, fill=has_brand)) +
+  geom_bar(position='fill') +
+  theme(axis.text.x=element_text(angle=15, hjust=1, size=8)) +
+  xlab('1st Categories') +
+  ylab('Proportion') +
+  ggtitle('Items With and Without Brands')
+```
+
+
+##### withtop 10 brands
+
+```{r top_brands}
+top10 <- train[brand_name !="", .N, by = .(bName = brand_name)][order(N, decreasing = T)][1:10]
+
+train[brand_name %in% top10$bName] %>%
+  ggplot(aes(x=factor(brand_name, levels=rev(top10$bName)), fill=level_1_cat)) +
+  geom_bar(width=0.5) +
+  coord_flip() +
+  xlab('brand') +
+  labs(fill='1st Category') +
+  ggtitle('Top 10 Brands and Their Categories')
+```
 
 ### level 2
 Statistics of level 2
@@ -244,11 +292,11 @@ train %>%
   theme(legend.position="none", plot.title = element_text(size=10))
 
 ```
+
 Still _Women_ and _Kids_ items are at the top. We can also see second level category items distribution against _price_ for specific first level, let us compare between _Men_ and _Women_ items
 
 ```{r men}
-train %>%
-  filter(level_1_cat =="Men") %>% 
+train[level_1_cat =="Men"] %>% 
   ggplot(aes(x = level_2_cat, y = log(price+1), fill = level_2_cat)) + 
   geom_boxplot(varwidth = TRUE) + 
   coord_flip() + 
@@ -258,8 +306,7 @@ train %>%
 ```
 
 ```{r women}
-train %>%
-  filter(level_1_cat =="Women") %>% 
+train[level_1_cat =="Women"] %>% 
   ggplot(aes(x = level_2_cat, y = log(price+1), fill = level_2_cat)) + 
   geom_boxplot(varwidth = TRUE) + 
   coord_flip() + 
@@ -267,7 +314,7 @@ train %>%
   theme(legend.position="none", plot.title = element_text(size=10))
 
 ```
-It seems Men's shoes and accessories are what _Men_ items are higher than _Women_ items. Otherwise, _Women_ items are more pricy in general.
+It seems Men's shoes and accessories are why _Men_ items are higher than _Women_ items. Otherwise, _Women_ items are more pricy in general.
 
 As a bonus visualization, let us see level 1 and level 2 interaction in different way
 ```{r eval=FALSE, echo=FALSE}
@@ -331,58 +378,7 @@ train[level_1_cat =="Women", .N, by = .(level_2_cat, level_3_cat)] %>%
   theme(legend.position = "null") +
   ggtitle("2nd and 3rd Hierarchical Category Levels Under Women")
 ```
-### Relations with other items
 
-#### with Item Condition
-
-We can examine how item counts are distributed across top-level category and condition.
-```{r level_1_cat_condition_price}
-p1 <-
-    train[, .N, by = c('level_1_cat', 'item_condition_id')] %>%
-    ggplot(aes(x = item_condition_id, y = level_1_cat, fill = N/1000)) +
-    geom_tile() +
-    scale_fill_gradient(low = 'lightblue', high = 'cyan4') +
-    labs(x = 'Condition', y = '', fill = 'Number of items (000s)', title = 'Item count by category and condition') +
-    theme_bw() + 
-    theme(legend.position = 'bottom')
-    
-p2 <-
-    train[, .(median_price = median(price)), by = c('level_1_cat', 'item_condition_id')] %>%
-    ggplot(aes(x = item_condition_id, y = level_1_cat, fill = median_price)) +
-    geom_tile() +
-    scale_fill_gradient(low = 'lightblue', high = 'cyan4', labels = dollar) +
-    labs(x = 'Condition', y = '', fill = 'Median price', title = 'Item price by category and condition') + 
-    theme_bw() + 
-    theme(legend.position = 'bottom', axis.text.y = element_blank())
-    
-grid.arrange(p1, p2, ncol = 2)
-```
-Women’s items of condition 1,2, and 3 are the most numerous. This is followed by Beauty products. `
-
-#### with Brands
-```{r levels_brands}
-train[, has_brand := (brand_name!='')] %>% 
-  ggplot(aes(x=level_1_cat, fill=has_brand)) +
-  geom_bar(position='fill') +
-  theme(axis.text.x=element_text(angle=15, hjust=1, size=8)) +
-  xlab('1st Categories') +
-  ylab('Proportion') +
-  ggtitle('Items With and Without Brands')
-```
-
-top 10 brands
-
-```{r top_brands}
-top10 <- train[brand_name !="", .N, by = .(bName = brand_name)][order(N, decreasing = T)][1:10]
-
-train[brand_name %in% top10$bName] %>%
-  ggplot(aes(x=factor(brand_name, levels=rev(top10$bName)), fill=level_1_cat)) +
-  geom_bar(width=0.5) +
-  coord_flip() +
-  xlab('brand') +
-  labs(fill='1st Category') +
-  ggtitle('Top 10 Brands and Their Categories')
-```
 
 Ok. It seems textaul predictors have a much greater influnce over response variable than the numric ones. Therefore, we expect to get a lot from the last textual predictor _item description_.
 
@@ -498,13 +494,6 @@ data.frame(term = names(tf), freq = unname(tf)) %>%
     coord_flip() 
 ```
 
-Ok, now we knew what _free_ word is used for :D. Now, let us confirm this by a word cloud.
-
-```{r Warning = FALSE, error=FALSE, message=FALSE}
-#textplot_wordcloud(dfm3, min.freq = 1000, random.order = FALSE,
- #                  rot.per = .50, 
-  #                 colors = RColorBrewer::brewer.pal(8,"Dark2"))
-```
 
 Let us see the _level 1 category_ in the documents
 ```{r level_1_cat_desc}
@@ -526,13 +515,14 @@ p2 <- summary(corpus) %>%
 
 grid.arrange(p1, p2, ncol = 2)
 ```
+
 OK, altough men items are the highest but there are no much description for these items, it seems predicting these items will not be so much easy.
 
 ## Names
 ```{r names}
 length(unique(train$name))
 ```
-Names and brands and conditions
+How are _Names_ correlated with _brands_ and _conditions_
 
 ```{r}
 p1 <- train[level_1_cat != ""][, cat_in_name := (str_detect(name, level_3_cat))] %>% 
@@ -554,9 +544,10 @@ p2 <- train[train$has_brand][,brand_in_name := (str_detect(name, brand_name))] %
 grid.arrange(p1, p2, ncol=1)
 ```
 
-top10
+and what about the top10
 ```{r}
-train[brand_name %in% top10$bName][, top_brand_in_name := (str_detect(name, brand_name))] %>% 
+train[brand_name %in% top10$bName]
+[, top_brand_in_name := (str_detect(name, brand_name))] %>% 
   ggplot(aes(x=factor(brand_name, levels=top10$bName), fill=top_brand_in_name)) +
   geom_bar(position='fill') +
   theme(axis.text.x=element_text(angle=30, hjust=1, size=8)) +
@@ -565,7 +556,7 @@ train[brand_name %in% top10$bName][, top_brand_in_name := (str_detect(name, bran
   ggtitle('Brand Appears in Item Name (By Top 10 Brands)')
 ```
 
-brand vs price vs categ
+OK, now let us see _brand_ vs _price_ vs _category_
 
 ```{r brand_price_categ}
 train %>%
