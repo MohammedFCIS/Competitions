@@ -207,7 +207,18 @@ length(levels(train$level_1_cat))
 table(train$level_1_cat)
 ```
 
-So, we have 10 items, let us its relation with _price_
+So, we have 10 categories plus _non category_ item.
+#### No category items
+We have an important questions, does the items with no _first level_ category have any other levels?
+```{r}
+length(train$category_name == "") == length(train$level_1_cat == "")
+```
+So, we are no sure that if item has no level 1 cateogry, it has not levels at all, so let us continue with our investigation.
+
+#### Relations with other items
+
+##### price
+First, let us its relation with _price_
 ```{r level_1_cat_plot}
 train %>%
     ggplot(aes(x = level_1_cat, y = log(price+1), fill = level_1_cat)) + 
@@ -217,8 +228,6 @@ train %>%
 ```
 So, we have items with no category but its prices are higher than __Homemade__ items which is the _lowes_ and less than __Men__ items which are surprisingly higher than __Women__ items in average. However, _Women_ items still alot more than any other item.
 
-
-#### Relations with other items
 
 ##### with Item Condition
 
@@ -334,6 +343,15 @@ statistics of level3
 length(levels(train$level_3_cat))
 table(train$level_3_cat)[1:10]
 ```
+Before continuing further in investigation, we have an important question:
+Are there items having less than 3 levels of categories?
+```{r catg_3_items}
+train[level_1_cat != "" & level_2_cat != "" & level_3_cat == "", .N]
+```
+So, all items that have categories levels 1 and 2 must have category 3
+
+#### Relations with other items
+
 It will hard to visualize all these data at once, so let us seen what _brands_ are pricy for _Men_ and _Women_ pricy items 
 ```{r shoes}
 train[level_1_cat =="Men" & level_2_cat == "Shoes"] %>% 
@@ -407,18 +425,22 @@ OK, that was some informatice samples to word in context.
 So, let us proceed to the next step and calculate DTM(_Doment-to-Term-Matrix_), we remove remove english stopwords and punctuation, and stem words. To find first the most top single words
 
 ```{r ngram_1}
-dfm <- dfm(
-    corpus, 
-    ngrams = 1, 
-    remove = c("rm", stopwords("english")),
-    remove_punct = TRUE,
-    remove_numbers = TRUE,
-    stem = TRUE)
+dfm <- tokens(char_tolower(train$item_description),
+              remove_punct = TRUE,
+              remove_numbers = TRUE,
+              remove_symbols = TRUE,
+              remove_hyphens = TRUE,
+              remove_twitter = TRUE,
+              remove_url = TRUE) %>% 
+  tokens_remove("\\p{P}", valuetype = "regex", padding = TRUE) %>%
+  tokens_remove(stopwords("english"), "description", "yet", "â") %>% 
+  tokens_ngrams(n = 1) %>%
+  dfm()
 ```
 
-Let us investigate the resultant document. First, let us get the 25 most common words
-```{r top_25}
-tf <- topfeatures(dfm, n = 25)
+Let us investigate the resultant document. First, let us get the 10 most common words
+```{r top_10}
+tf <- topfeatures(dfm, n = 10)
 ```
 
 Now, let us visualize it
@@ -426,7 +448,7 @@ Now, let us visualize it
 data.frame(term = names(tf), freq = unname(tf)) %>%
     ggplot(aes(x = reorder(term, freq), y = freq/1000)) + 
     geom_bar(stat = 'identity', fill = 'orangered2') + 
-    labs(x = '', y = 'Frequency (000s)', title = '25 most common description words') + 
+    labs(x = '', y = 'Frequency (000s)', title = '10 most common description words') + 
     coord_flip() 
 ```
 It seems that there are care about the item condition, size, shipping and brand. Let us create a word cloud to see different point of view :)
@@ -442,25 +464,27 @@ Ok, it is a confirmation.
 What about the most popular 2 words
 
 ```{r ngram_2}
-dfm2 <- corpus %>%
-   #to reduce the amound of data for performance issue
-    corpus_sample(size = floor(ndoc(corpus) * 0.15)) %>%
-    dfm(
-        ngrams = 2,
-        ignoredFeatures = c("rm", stopwords("english")),
-        remove_punct = TRUE,
-        remove_numbers = TRUE,
-        concatenator = " "
-    )
-# get 25 most common bigrams
-tf <- topfeatures(dfm2, n = 25)
+dfm2 <- tokens(char_tolower(train$item_description),
+              remove_punct = TRUE,
+              remove_numbers = TRUE,
+              remove_symbols = TRUE,
+              remove_hyphens = TRUE,
+              remove_twitter = TRUE,
+              remove_url = TRUE) %>% 
+  tokens_remove("\\p{P}", valuetype = "regex", padding = TRUE) %>%
+  tokens_remove(c(stopwords("english"), "description", "yet", "â")) %>% 
+  tokens_ngrams(n = 2) %>%
+  dfm(concatenator = " ")
+
+# get 10 most common bigrams
+tf <- topfeatures(dfm2, n = 10)
 
 # convert to df and plot
 data.frame(term = names(tf), freq = unname(tf)) %>%
     ggplot(aes(x = reorder(term, freq), y = freq/1000)) + 
     geom_bar(stat = 'identity', fill = 'orangered2') + 
     labs(x = '', y = 'Frequency (000s)', 
-         title = '25 most common description bigrams') + 
+         title = '10 most common description bigrams') + 
     coord_flip() 
 ```
 The results seem simirlar to the single phrase results. Let us confirm this by word cloud
@@ -471,29 +495,38 @@ textplot_wordcloud(dfm2, min.freq = 2000, random.order = FALSE,
 ```
 It is confirmed.
 
+
 ### N Grams 3
 What about 3 phrases
 ```{r ngram_3}
-dfm3 <- corpus %>%
-    corpus_sample(size = floor(ndoc(corpus) * 0.25)) %>%
-    dfm(
-        ngrams = 3,
-        ignoredFeatures = c("rm", stopwords("english")),
-        remove_punct = TRUE,
-        remove_numbers = TRUE,
-        concatenator = " "
-    )
-# get 25 most common trigrams
-tf <- topfeatures(dfm3, n = 25)
+dfm3 <- tokens(char_tolower(train$item_description),
+              remove_punct = TRUE,
+              remove_numbers = TRUE,
+              remove_symbols = TRUE,
+              remove_hyphens = TRUE,
+              remove_twitter = TRUE,
+              remove_url = TRUE) %>% 
+  tokens_remove("\\p{P}", valuetype = "regex", padding = TRUE) %>%
+  tokens_remove(c(stopwords("english"), "description", "yet", "â", "rm"), padding = TRUE) %>% 
+  tokens_ngrams(n = 3) %>%
+  dfm(concatenator = " ")
+
+# get 10 most common trigrams
+tf <- topfeatures(dfm3, n = 10)
 
 # convert to df and plot
 data.frame(term = names(tf), freq = unname(tf)) %>%
     ggplot(aes(x = reorder(term, freq), y = freq/1000)) + 
     geom_bar(stat = 'identity', fill = 'orangered2') + 
-    labs(x = '', y = 'Frequency (000s)', title = '25 most common description 3-grams') + 
+    labs(x = '', y = 'Frequency (000s)', title = '10 most common description 3-grams') + 
     coord_flip() 
 ```
 
+```{r warning=FALSE}
+textplot_wordcloud(dfm3, min.freq = 2000, random.order = FALSE,
+                   rot.per = .25, 
+                   colors = RColorBrewer::brewer.pal(8,"Dark2"))
+```
 
 Let us see the _level 1 category_ in the documents
 ```{r level_1_cat_desc}
@@ -546,8 +579,7 @@ grid.arrange(p1, p2, ncol=1)
 
 and what about the top10
 ```{r}
-train[brand_name %in% top10$bName]
-[, top_brand_in_name := (str_detect(name, brand_name))] %>% 
+train[brand_name %in% top10$bName][, top_brand_in_name := (str_detect(name, brand_name))] %>% 
   ggplot(aes(x=factor(brand_name, levels=top10$bName), fill=top_brand_in_name)) +
   geom_bar(position='fill') +
   theme(axis.text.x=element_text(angle=30, hjust=1, size=8)) +
