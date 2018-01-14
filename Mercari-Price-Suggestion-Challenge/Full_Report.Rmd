@@ -2,12 +2,12 @@
 title: "Mercari Price Suggestion Challenge"
 author: "Ali Ezzat, Mohammed Ali"
 date: "December 30, 2017"
-output: 
+output:
+  html_document:
+    keep_md: yes
   pdf_document:
     toc: yes
     toc_depth: 2
-  html_document:
-    keep_md: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -48,6 +48,18 @@ summary(train$price)
 ```
 
 It seems there are items are givem as gifts (min. is 0), and we have a few very expensive items as well.
+So. let us see what these items. First let us see what are the expensivce items.
+```{r expensive}
+train[price > 1500, .(Name = name, Brand = brand_name, Price = price)][order(Price, decreasing = TRUE)]
+```
+So we have a 43 items above 1500$, and they are either a famous and an expensive brands or a very expensive jewelry. No surprises here.
+
+What about the free/gift items?
+```{r free}
+train[price == 0, .(Name = name, Brand = brand_name, Condition = item_condition_id, Desc. = item_description)]
+```
+OK, they are less than 100 items, and I think they left price uninetentionally. 
+
 Let us visualize it for more clear picture
 ```{r price_hist, warning=FALSE, message=FALSE}
 ggplot(data = train, aes(x = price)) + 
@@ -89,7 +101,7 @@ table(train$item_condition_id)
 ```
 
 We can confirm it more by the following plot
-```{r item_condition_factor_plot, tidy=TRUE}
+```{r item_condition_factor_plot}
 train[, .N, by = item_condition_id] %>%
   ggplot(aes(x = item_condition_id, y = N/1000, fill = item_condition_id)) +
   geom_bar(stat = 'identity') + 
@@ -100,7 +112,7 @@ It seems most of the items are in condition _1_ which is, I do not know there is
 
 Now, let us compare the _item conditions_ predictor aginst the response variable _price_
 
-```{r item_condition_price_plot, tidy=TRUE}
+```{r item_condition_price_plot}
 train[, .(.N, median_price = median(price)), 
       by = item_condition_id][order(item_condition_id)]
 
@@ -433,8 +445,8 @@ dfm <- tokens(char_tolower(train$item_description),
               remove_twitter = TRUE,
               remove_url = TRUE) %>% 
   tokens_remove("\\p{P}", valuetype = "regex", padding = TRUE) %>%
-  tokens_remove(stopwords("english"), "description", "yet", "â") %>% 
-  tokens_ngrams(n = 1) %>%
+  tokens_remove(c(stopwords("english"), "description", "yet", "â", "rm"), padding = TRUE) %>% 
+  tokens_ngrams(n = 1, concatenator = " ") %>%
   dfm()
 ```
 
@@ -472,9 +484,9 @@ dfm2 <- tokens(char_tolower(train$item_description),
               remove_twitter = TRUE,
               remove_url = TRUE) %>% 
   tokens_remove("\\p{P}", valuetype = "regex", padding = TRUE) %>%
-  tokens_remove(c(stopwords("english"), "description", "yet", "â")) %>% 
-  tokens_ngrams(n = 2) %>%
-  dfm(concatenator = " ")
+  tokens_remove(c(stopwords("english"), "description", "yet", "â", "rm"), padding = TRUE) %>% 
+  tokens_ngrams(n = 2, concatenator = " ") %>%
+  dfm()
 
 # get 10 most common bigrams
 tf <- topfeatures(dfm2, n = 10)
@@ -508,8 +520,8 @@ dfm3 <- tokens(char_tolower(train$item_description),
               remove_url = TRUE) %>% 
   tokens_remove("\\p{P}", valuetype = "regex", padding = TRUE) %>%
   tokens_remove(c(stopwords("english"), "description", "yet", "â", "rm"), padding = TRUE) %>% 
-  tokens_ngrams(n = 3) %>%
-  dfm(concatenator = " ")
+  tokens_ngrams(n = 3, concatenator = " ") %>%
+  dfm()
 
 # get 10 most common trigrams
 tf <- topfeatures(dfm3, n = 10)
@@ -592,11 +604,11 @@ OK, now let us see _brand_ vs _price_ vs _category_
 
 ```{r brand_price_categ}
 train %>%
-ggplot(aes(x=level_1_cat, y=log(price) + 1, fill=has_brand)) +
-geom_boxplot(outlier.size=0.1) +
-ggtitle('Boxplot of Log Price versus 1st Category') +
-xlab('1st Category') +
-theme(axis.text.x=element_text(angle=15, hjust=1))
+  ggplot(aes(x=level_1_cat, y=log(price) + 1, fill=has_brand)) +
+  geom_boxplot(outlier.size=0.1) +
+  ggtitle('Boxplot of Log Price versus 1st Category') +
+  xlab('1st Category') +
+  theme(axis.text.x=element_text(angle=15, hjust=1))
 ```
 
 
