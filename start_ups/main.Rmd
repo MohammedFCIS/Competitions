@@ -26,6 +26,7 @@ First we will read the data using `read_csv` methof from `readr` packing within 
 
 ```{r read_data, message=FALSE}
 startups <- read_csv("data/CAX_Startup_Data.csv")
+```
 So we have `r nrow(startups)` observations belongs to `r ncol(startups)` variables, one of them is the response variable that we would to designate later for predction and the rest are the predictors.
 
 Now, let us take a `glimpse` of the data
@@ -54,7 +55,7 @@ So, the following are the steps we will conduct to clean our dataset
 * Unify the way missing data are marked.
 * Remove column with missed data over 40%.
 
-## Factor Data
+## Factor Variables
 Let us write a generel method to handle factor data
 
 ```{r to_factor}
@@ -80,6 +81,27 @@ Now let us construct factor of factor variables and convert them
 ```{r convert_factors}
 factor_cols <- c(2, 12, 16:17, 24, 26:65, 67, 71, 73, 75:87, 89:91, 93, 97, 100:101)
 map(factor_cols, to_factor)
+```
+
+## Numeric Variables
+Let us write a generel method to handle numeric variables
+
+```{r to_numeric}
+to_numeric<- function(index) {
+startups[[index]][startups[[index]] == 'No Info'] <- NA
+# Replace empty string with NA
+startups[[index]][startups[[index]] == ''] <- NA
+# Convert to numeric
+startups[[index]] <- as.numeric(startups[[index]])
+# Get basic statistics
+summary(startups[[index]])
+}
+```
+Now let us construct factor of factor variables and convert them
+
+```{r convert_numeric}
+numeric_cols <- c(3:5,10,11,18:23,25,61,66,68:70,72,74,88,92,94:96,98,99,102:116)
+map(numeric_cols, to_numeric)
 ```
 
 
