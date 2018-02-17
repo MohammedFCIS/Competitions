@@ -22,6 +22,66 @@ Our main goal here is to see how we can walk through a business case to analysis
 So let us begin our journey.
 
 # Data Wrangling
+First we will read the data using `read_csv` methof from `readr` packing within `tidyverse` package.
+
+```{r read_data, message=FALSE}
+startups <- read_csv("data/CAX_Startup_Data.csv")
+So we have `r nrow(startups)` observations belongs to `r ncol(startups)` variables, one of them is the response variable that we would to designate later for predction and the rest are the predictors.
+
+Now, let us take a `glimpse` of the data
+```{r data_glimpse}
+glimpse(startups)
+```
+
+Clearly, taking `glimpse` of data was not so useful here due to huge amount of variables, so let us see how the first 4 rows of the data looks like
+```{r data_head}
+head(startups, 5)
+```
+
+Ok, it is a **little** better, from that it seems we have the following notes:
+
+* There are many missong values 
+* Missing values are not only marked as `NA` but there are other values like `No Info` or just an empty string.
+* Varaible are read as _characters_ datatype by default and would need to be probably converted to their _original_ data type(dates, factors, numeric)
+* There are variables clearly will need special processing like `Short Description of company profile` , `Specialization of highest education` or `
+Investors`
+* There are issues in texual columns (upper and lower case, different format, etc..)
+* Clearly `Dependent-Company Status` is the response variable.
+
+So, the following are the steps we will conduct to clean our dataset
+
+* Will convert the variables into their proper datatypes.
+* Unify the way missing data are marked.
+* Remove column with missed data over 40%.
+
+## Factor Data
+Let us write a generel method to handle factor data
+
+```{r to_factor}
+to_factor<- function(index) {
+  # processing column
+names(startups)[index]
+# Replace 'No Info' with NA
+startups[[index]][startups[[index]] == 'No Info'] <- NA
+# Replace empty string with NA
+startups[[index]][startups[[index]] == ''] <- NA
+# Unify the case
+startups[[index]] <- toupper(startups[[index]])
+# Convert to factor
+startups[[index]] <- as.factor(startups[[index]])
+# Know the levels
+levels(startups[[index]])
+# Get basic statistics
+summary(startups[[index]])
+}
+```
+Now let us construct factor of factor variables and convert them
+
+```{r convert_factors}
+factor_cols <- c(2, 12, 16:17, 24, 26:65, 67, 71, 73, 75:87, 89:91, 93, 97, 100:101)
+map(factor_cols, to_factor)
+```
+
 
 # Exploratory Data Analysis
 
