@@ -56,74 +56,86 @@ So, the following are the steps we will conduct to clean our dataset
 * Unify the way missing data are marked.
 * Remove column with missed data over 40%.
 
-## Factor Variables
-Let us write a generel method to handle factor variables
+## Variables Correct type
+First let us write the methods that are needed for each conversion
 
 ```{r to_factor}
 to_factor<- function(index) {
-  # processing column
-names(startups)[index]
-# Replace 'No Info' with NA
-startups[[index]][startups[[index]] == 'No Info'] <- NA
-# Replace empty string with NA
-startups[[index]][startups[[index]] == ''] <- NA
-# Unify the case
-startups[[index]] <- toupper(startups[[index]])
-# Convert to factor
-startups[[index]] <- as.factor(startups[[index]])
-# Know the levels
-levels(startups[[index]])
-# Get basic statistics
-summary(startups[[index]])
+   # Replace 'No Info' with NA
+  startups[[index]][startups[[index]] == 'No Info'] <- NA
+  # Replace empty string with NA
+  startups[[index]][startups[[index]] == ''] <- NA
+  # Unify the case
+  startups[[index]] <- toupper(startups[[index]])
+  # Convert to factor
+  startups[[index]] <- as.factor(startups[[index]])
+  # Know the levels
+  levels(startups[[index]])
+  # Get basic statistics
+  summary(startups[[index]])
 }
 ```
-Now let us construct factor of factor variables and convert them
-
-```{r convert_factors}
-factor_cols <- c(2, 12, 16:17, 24, 26:65, 67, 71, 73, 75:87, 89:91, 93, 97, 100:101)
-map(factor_cols, to_factor)
-```
-
-## Numeric Variables
-Let us write a generel method to handle numeric variables
 
 ```{r to_numeric}
 to_numeric<- function(index) {
-startups[[index]][startups[[index]] == 'No Info'] <- NA
-# Replace empty string with NA
-startups[[index]][startups[[index]] == ''] <- NA
-# Convert to numeric
-startups[[index]] <- as.numeric(startups[[index]])
-# Get basic statistics
-summary(startups[[index]])
+   # Replace 'No Info' with NA
+  startups[[index]][startups[[index]] == 'No Info'] <- NA
+  # Replace empty string with NA
+  startups[[index]][startups[[index]] == ''] <- NA
+  # Convert to numeric
+  startups[[index]] <- as.numeric(startups[[index]])
+  # Get basic statistics
+  summary(startups[[index]])
 }
 ```
-Now let us construct factor of factor variables and convert them
+
+
+```{r to_date}
+to_date<- function(index) {
+   # Replace 'No Info' with NA
+  startups[[index]][startups[[index]] == 'No Info'] <- NA
+  # Replace empty string with NA
+  startups[[index]][startups[[index]] == ''] <- NA
+  # Convert to date
+  startups[[index]] <- mdy(startups[[index]])
+  # Get basic statistics
+  summary(startups[[index]])
+}
+```
+
+Now we write a generel method to switch to correct variable data types
+```{r correct_type}
+correct_type <- function(index, type) {
+  switch (type,
+    "factor" = to_factor(index),      
+    "numeric" = to_numeric(index),
+    "date" = to_date(index)
+  )
+}
+```
+
+## Factor Variables
+Construct factor of factor variables and convert them
+
+```{r convert_factors}
+factor_cols <- c(2, 12, 16:17, 24, 26:65, 67, 71, 73, 75:87, 89:91, 93, 97, 100:101)
+map2(factor_cols, "factor", correct_type)
+```
+
+## Numeric Variables
+Construct factor of numeric variables and convert them
 
 ```{r convert_numeric}
 numeric_cols <- c(3:5,10,11,18:23,25,61,66,68:70,72,74,88,92,94:96,98,99,102:116)
-map(numeric_cols, to_numeric)
+map2(numeric_cols, "numeric", correct_type)
 ```
 
-## date Variables
-Let us write a generel method to handle date variables
-
-```{r to_numeric}
-to_date<- function(index) {
-startups[[index]][startups[[index]] == 'No Info'] <- NA
-# Replace empty string with NA
-startups[[index]][startups[[index]] == ''] <- NA
-# Convert to numeric
-startups[[index]] <- mdy(startups[[index]])
-# Get basic statistics
-summary(startups[[index]])
-}
-```
-Now let us construct factor of factor variables and convert them
+## Date Variables
+Construct factor of date variables and convert them
 
 ```{r convert_date}
 date_cols <- c(13:14)
-map(date_cols, to_date)
+map2(date_cols, "date", correct_type)
 ```
 
 # Exploratory Data Analysis
