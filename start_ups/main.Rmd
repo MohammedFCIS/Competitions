@@ -1,0 +1,37 @@
+---
+title: "Startups Business Analytics"
+author: "Mohammed Ali"
+date: "February 17, 2018"
+output:
+    html_document:
+      toc : true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Objective
+Our main goal here is to see how we can walk through a business case to analysis it and conclude useful results from it. Although the dataset here is dummy one but it has the same issues for any real dataset, except the huge size, like:
+
+* A lot of predictors to comperhend and get usefl info from them.
+* Data has a lot of missing, unclear items.
+* Amiguate relation between the predictors
+
+So let us begin our journey.
+
+# Data Wrangling
+
+# Exploratory Data Analysis
+
+# Feature Engineering
+
+# Pre-Modeling Processing
+## Missing Values
+
+## More Exploration
+
+## Hypothesis Testing
+
+## Predictor Selection
