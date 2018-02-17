@@ -10,6 +10,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(lubridate)
 ```
 
 # Objective
@@ -56,7 +57,7 @@ So, the following are the steps we will conduct to clean our dataset
 * Remove column with missed data over 40%.
 
 ## Factor Variables
-Let us write a generel method to handle factor data
+Let us write a generel method to handle factor variables
 
 ```{r to_factor}
 to_factor<- function(index) {
@@ -104,6 +105,26 @@ numeric_cols <- c(3:5,10,11,18:23,25,61,66,68:70,72,74,88,92,94:96,98,99,102:116
 map(numeric_cols, to_numeric)
 ```
 
+## date Variables
+Let us write a generel method to handle date variables
+
+```{r to_numeric}
+to_date<- function(index) {
+startups[[index]][startups[[index]] == 'No Info'] <- NA
+# Replace empty string with NA
+startups[[index]][startups[[index]] == ''] <- NA
+# Convert to numeric
+startups[[index]] <- mdy(startups[[index]])
+# Get basic statistics
+summary(startups[[index]])
+}
+```
+Now let us construct factor of factor variables and convert them
+
+```{r convert_date}
+date_cols <- c(13:14)
+map(date_cols, to_date)
+```
 
 # Exploratory Data Analysis
 
