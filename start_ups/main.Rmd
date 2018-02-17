@@ -32,7 +32,7 @@ So we have `r nrow(startups)` observations belongs to `r ncol(startups)` variabl
 
 Now, let us take a `glimpse` of the data
 ```{r data_glimpse}
-glimpse(startups)
+str(startups)
 ```
 
 Clearly, taking `glimpse` of data was not so useful here due to huge amount of variables, so let us see how the first 4 rows of the data looks like
@@ -68,11 +68,7 @@ to_factor<- function(index) {
   # Unify the case
   startups[[index]] <- toupper(startups[[index]])
   # Convert to factor
-  startups[[index]] <- as.factor(startups[[index]])
-  # Know the levels
-  levels(startups[[index]])
-  # Get basic statistics
-  summary(startups[[index]])
+  return(as.factor(startups[[index]]))
 }
 ```
 
@@ -83,9 +79,7 @@ to_numeric<- function(index) {
   # Replace empty string with NA
   startups[[index]][startups[[index]] == ''] <- NA
   # Convert to numeric
-  startups[[index]] <- as.numeric(startups[[index]])
-  # Get basic statistics
-  summary(startups[[index]])
+  return(as.numeric(startups[[index]]))
 }
 ```
 
@@ -97,9 +91,7 @@ to_date<- function(index) {
   # Replace empty string with NA
   startups[[index]][startups[[index]] == ''] <- NA
   # Convert to date
-  startups[[index]] <- mdy(startups[[index]])
-  # Get basic statistics
-  summary(startups[[index]])
+  return(mdy(startups[[index]]))
 }
 ```
 
@@ -111,31 +103,40 @@ correct_type <- function(index, type) {
     "numeric" = to_numeric(index),
     "date" = to_date(index)
   )
+  return(startups[[index]])
 }
 ```
 
-## Factor Variables
+### Factor Variables
 Construct factor of factor variables and convert them
 
 ```{r convert_factors}
 factor_cols <- c(2, 12, 16:17, 24, 26:65, 67, 71, 73, 75:87, 89:91, 93, 97, 100:101)
-map2(factor_cols, "factor", correct_type)
+startups[, factor_cols] <- map(factor_cols, to_factor)
 ```
 
-## Numeric Variables
+### Numeric Variables
 Construct factor of numeric variables and convert them
 
 ```{r convert_numeric}
 numeric_cols <- c(3:5,10,11,18:23,25,61,66,68:70,72,74,88,92,94:96,98,99,102:116)
-map2(numeric_cols, "numeric", correct_type)
+startups[, numeric_cols] <- map2(numeric_cols, "numeric", correct_type)
 ```
 
-## Date Variables
+### Date Variables
 Construct factor of date variables and convert them
 
 ```{r convert_date}
 date_cols <- c(13:14)
-map2(date_cols, "date", correct_type)
+startups[, date_cols] <- map2(date_cols, "date", correct_type)
+```
+
+## Remove polluted predictors
+Now, as the variables in their proper data types, let us remove predictors with more than 40% missing data
+
+```{r remove_poll_vars}
+startups <- startups[colSums(is.na(startups))/nrow(startups) < .4]
+dim(startups)
 ```
 
 # Exploratory Data Analysis
