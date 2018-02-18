@@ -30,17 +30,12 @@ startups <- read_csv("data/CAX_Startup_Data.csv")
 ```
 So we have `r nrow(startups)` observations belongs to `r ncol(startups)` variables, one of them is the response variable that we would to designate later for predction and the rest are the predictors.
 
-Now, let us take a `glimpse` of the data
-```{r data_glimpse}
-str(startups)
-```
-
-Clearly, taking `glimpse` of data was not so useful here due to huge amount of variables, so let us see how the first 4 rows of the data looks like
+Let us see how the first 5 rows of the data looks like
 ```{r data_head}
 head(startups, 5)
 ```
 
-Ok, it is a **little** better, from that it seems we have the following notes:
+From that it seems we have the following notes:
 
 * There are many missong values 
 * Missing values are not only marked as `NA` but there are other values like `No Info` or just an empty string.
@@ -52,75 +47,40 @@ Investors`
 
 So, the following are the steps we will conduct to clean our dataset
 
-* Will convert the variables into their proper datatypes.
 * Unify the way missing data are marked.
+* Will convert the variables into their proper datatypes.
 * Remove column with missed data over 40%.
 
+## Setup Missing Data
+```{r set_missing}
+set_missing <- function(x) {
+  # Replace 'No Info' with NA
+  x[x == 'No Info'] <- NA
+  # Replace empty string with NA
+  x[x == ''] <- NA
+  return(x)
+}
+
+startups <- map_df(startups, set_missing)
+```
+
 ## Variables Correct type
-First let us write the methods that are needed for each conversion
-
-```{r to_factor}
-to_factor<- function(index) {
-   # Replace 'No Info' with NA
-  startups[[index]][startups[[index]] == 'No Info'] <- NA
-  # Replace empty string with NA
-  startups[[index]][startups[[index]] == ''] <- NA
-  # Unify the case
-  startups[[index]] <- toupper(startups[[index]])
-  # Convert to factor
-  return(as.factor(startups[[index]]))
-}
-```
-
-```{r to_numeric}
-to_numeric<- function(index) {
-   # Replace 'No Info' with NA
-  startups[[index]][startups[[index]] == 'No Info'] <- NA
-  # Replace empty string with NA
-  startups[[index]][startups[[index]] == ''] <- NA
-  # Convert to numeric
-  return(as.numeric(startups[[index]]))
-}
-```
-
-
-```{r to_date}
-to_date<- function(index) {
-   # Replace 'No Info' with NA
-  startups[[index]][startups[[index]] == 'No Info'] <- NA
-  # Replace empty string with NA
-  startups[[index]][startups[[index]] == ''] <- NA
-  # Convert to date
-  return(mdy(startups[[index]]))
-}
-```
-
-Now we write a generel method to switch to correct variable data types
-```{r correct_type}
-correct_type <- function(index, type) {
-  switch (type,
-    "factor" = to_factor(index),      
-    "numeric" = to_numeric(index),
-    "date" = to_date(index)
-  )
-  return(startups[[index]])
-}
-```
-
 ### Factor Variables
+
 Construct factor of factor variables and convert them
 
 ```{r convert_factors}
 factor_cols <- c(2, 12, 16:17, 24, 26:65, 67, 71, 73, 75:87, 89:91, 93, 97, 100:101)
-startups[, factor_cols] <- map(factor_cols, to_factor)
+startups[, factor_cols] <- map_df(startups[, factor_cols], toupper)
+startups[, factor_cols] <- map_df(startups[, factor_cols], as.factor)
 ```
 
 ### Numeric Variables
 Construct factor of numeric variables and convert them
 
-```{r convert_numeric}
+```{r convert_numeric, message=FALSE, warning=FALSE}
 numeric_cols <- c(3:5,10,11,18:23,25,61,66,68:70,72,74,88,92,94:96,98,99,102:116)
-startups[, numeric_cols] <- map2(numeric_cols, "numeric", correct_type)
+startups[, numeric_cols] <- map_df(startups[, numeric_cols], as.numeric)
 ```
 
 ### Date Variables
@@ -128,7 +88,7 @@ Construct factor of date variables and convert them
 
 ```{r convert_date}
 date_cols <- c(13:14)
-startups[, date_cols] <- map2(date_cols, "date", correct_type)
+startups[, date_cols] <- map_df(startups[, date_cols], mdy)
 ```
 
 ## Remove polluted predictors
@@ -138,6 +98,12 @@ Now, as the variables in their proper data types, let us remove predictors with 
 startups <- startups[colSums(is.na(startups))/nrow(startups) < .4]
 dim(startups)
 ```
+It seems we git rid off 3 variables, let us take another look at the data now
+```{r top_5}
+head(startups)
+```
+
+Much better.
 
 # Exploratory Data Analysis
 
