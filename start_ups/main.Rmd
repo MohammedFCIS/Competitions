@@ -75,6 +75,13 @@ startups[, factor_cols] <- map_df(startups[, factor_cols], toupper)
 startups[, factor_cols] <- map_df(startups[, factor_cols], as.factor)
 ```
 
+Let us look at the `summary` for each variable to make sure that everything is ok.
+```{r convert_factors_summary}
+map(startups[, factor_cols], summary)
+```
+
+It seems that everything in order. However, there is a small note about some variables are about the *investors/owners/founders* not about the company itself which should not be there as certainly each person has his/her own qualifications and experience, but for sake of simplicity we will consider these varaibles are talking about all of these people at once as one unit.
+
 ### Numeric Variables
 Construct factor of numeric variables and convert them
 
@@ -83,12 +90,24 @@ numeric_cols <- c(3:5,10,11,18:23,25,61,66,68:70,72,74,88,92,94:96,98,99,102:116
 startups[, numeric_cols] <- map_df(startups[, numeric_cols], as.numeric)
 ```
 
+Let us look at the `summary` for each variable to make sure that everything is ok.
+```{r convert_numeric_summary}
+map(startups[, numeric_cols], summary)
+```
+
+It seems that seems that there are some outliers there, we will find out more we reach the EDA phase.
+
 ### Date Variables
 Construct factor of date variables and convert them
 
 ```{r convert_date}
 date_cols <- c(13:14)
 startups[, date_cols] <- map_df(startups[, date_cols], mdy)
+```
+
+Let us look at the `summary` for each variable to make sure that everything is ok.
+```{r convert_date_summary}
+map(startups[, date_cols], summary)
 ```
 
 ## Remove polluted predictors
