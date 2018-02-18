@@ -124,6 +124,37 @@ head(startups)
 
 Much better.
 
+## Textual Columns
+These columns need special treatment to extract useful features from it. There could be no single method to be applied to all as the other types, we will treat each variable alone.
+
+### Short Description of company profile
+Until now I do not know what to do with it
+```{r desc}
+head(startups$`Short Description of company profile`, 10)
+```
+
+### Industry of company
+It is a multi-level variable indicate the copmany industry, the levels are seprated by |.
+```{r copm_indust}
+head(startups$`Industry of company`, 10)
+```
+
+### Focus functions of company
+It is a multi-value variable indicate the company foucs.
+```{r comp_foc}
+head(startups$`Focus functions of company`, 10)
+```
+The following are some notes about this field:
+* values are either seprated by *,* or *&* and sometimes both.
+* The characters case is not standarized.
+* Missing functions
+
+### Investors
+It is a multi-value variable. Values are seprated by *|*, and sometimes there are missing values
+```{r investors}
+head(startups$Investors, 10)
+```
+
 # Exploratory Data Analysis
 
 # Feature Engineering
