@@ -5,6 +5,7 @@ date: "February 17, 2018"
 output:
     html_document:
       toc : true
+      levels : 2
 ---
 
 ```{r setup, include=FALSE}
