@@ -5,6 +5,7 @@ date: "February 17, 2018"
 output:
     html_document:
       toc : true
+      levels : 2
 ---
 
 ```{r setup, include=FALSE}
@@ -53,6 +54,7 @@ So, the following are the steps we will conduct to clean our dataset
 * Remove column with missed data over 40%.
 
 ## Setup Missing Data
+
 ```{r set_missing}
 set_missing <- function(x) {
   # Replace 'No Info' with NA
@@ -125,7 +127,8 @@ head(startups)
 
 Much better.
 
-## Textual Variables
+## Feature Engineering
+### Textual Variables
 Textual columns are those that contain *free text*. What differentiates these from the categorical columns is that the number of unique values for the textual columns would be too big. Such columns are typically messy, and we will have to deal with them on a column-by-column basis as no single preprocessing procedure would suit them all.
 
 Before we move on, let's modify the column names by making them lowercase and replacing spaces with underscores. Note that this is more of a personal preference than a neccessity.
@@ -152,7 +155,7 @@ startups[,textual_col_names] <- map_df(startups[,textual_col_names], tolower)
 
 
 
-### Industry of the Company
+#### Industry of the Company
 And now, a quick look at the *industry_of_company* column -- which indicates the particular domain that a company is working in -- shows us...
 
 ```{r comp_indust}
@@ -613,7 +616,7 @@ In case you are still wondering, the [ggplot2](https://cran.r-project.org/web/pa
 
 
 
-### Short description of company profile
+#### Short description of company profile
 
 Until now I do not know what to do with it
 
@@ -720,7 +723,7 @@ getKernel <- function() {
 
 ```
 
-### Focus functions of company
+#### Focus functions of company
 It is a multi-value variable indicate the company foucs.
 
 ```{r comp_foc}
@@ -734,7 +737,7 @@ The following are some notes about this field:
 
 
 
-### Investors
+#### Investors
 It is a multi-value variable. Values are seprated by `|`, and sometimes there are missing values
 ```{r investors}
 head(startups$investors, 10)
@@ -742,6 +745,32 @@ head(startups$investors, 10)
 
 
 
+
+### Time Series Variables
+This category contains the following two fields `Est. Founding Date` and `Last Funding Date`, so let us begin.
+#### Missing Values
+First we have to impute the missing values
+```{r impute_missing_time}
+founding_date <- na.locf(startups$`Est. Founding Date`, na.rm = FALSE)
+startups$`Est. Founding Date` <- na.locf(founding_date, fromLast = TRUE)
+summary(startups$`Est. Founding Date`)
+
+last_funding_date <- na.locf(startups$`Last Funding Date`, na.rm = FALSE)
+startups$`Last Funding Date` <- na.locf(last_funding_date, fromLast = TRUE)
+summary(startups$`Last Funding Date`)
+```
+
+
+#### EDA
+```{r ts_eda}
+ggplot(startups, aes(x = `Est. Founding Date`, y = `Dependent-Company Status`)) +
+  geom_point() +
+  scale_x_date('month')  +
+  ylab("Daily Bike Checkouts") +
+  xlab("")
+ggplot(daily_data, aes(Date, cnt)) + geom_line() + scale_x_date('month')  + ylab("Daily Bike Checkouts") +
+            xlab("")
+```
 
 # Exploratory Data Analysis
 
