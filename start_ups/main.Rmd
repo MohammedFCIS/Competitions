@@ -128,12 +128,13 @@ Much better.
 ## Textual Variables
 Textual columns are those that contain *free text*. What differentiates these from the categorical columns is that the number of unique values for the textual columns would be too big. Such columns are typically messy, and we will have to deal with them on a column-by-column basis as no single preprocessing procedure would suit them all.
 
-Before we move on, let's modify the column names by making them lowercase and replacing spaces with underscores. Note that this more of a personal preference than a neccessity.
+Before we move on, let's modify the column names by making them lowercase and replacing spaces with underscores. Note that this is more of a personal preference than a neccessity.
 ```{r modify_colnames}
 colnames(startups) <- tolower(gsub(x = colnames(startups), pattern = ' ', replacement = '_', fixed = TRUE))
 # the 'fixed' parameter is set as TRUE in order to match the pattern exactly. 
 # otherwise, the pattern will be interpreted as a regular expression instead, and an unexpected output may result.
 
+# see effect of last command
 head(colnames(startups))
 ```
 After a quick manual inspection (on the .csv file), we identified the following textual variables. We additionally set the contents of these columns to lowercase for easier processing later on.
@@ -236,7 +237,7 @@ colnames(dfm_industry)
 ```
 At last, we can move on to the *analysis* of the `industry_of_company` variable.
 
-Let's create a new data frame object where we bind the industry's DTM with the column of the response variable. Note that the DTM is currently of type `matrix`, so we need to coerce into a `data.frame` before binding.
+Let's create a new data frame object where we bind the industry's DTM with the column of the response variable. Note that the DTM is currently of type `matrix`, so we need to coerce it into a `data.frame` before binding.
 
 ```{r }
 # convert `dfm_industry` to data.frame and bind with response variable
@@ -371,7 +372,7 @@ industry_frequencies <- industry_frequencies %>% filter(!(industry == 'NA'))
 industry_frequencies
 ```
 
-Please work now, okay?
+Let's make sure it still doesn't work.
 
 ```{r fig.align='center'}
 ggplot(industry_frequencies, aes(x = industry, y = failed)) + # X: industry, Y: #failed companies
@@ -391,9 +392,9 @@ ggplot(industry_frequencies, aes(x = industry, y = as.double(failed))) +
                                    hjust = 1))                # right-align x-axis labels
 ```
 
-No luck :(
+Same as before :/
 
-After a short break, we stumbled upon something...
+Let's try the following.
 
 ```{r }
 # arrange records in descending order of number of successful companies
@@ -423,7 +424,35 @@ industry_frequencies$success %>%
   sort()               # ...then sort
 ```
 
-Lesson learned the hard way: When you have a column that has number values and you want to coerce them into type `numeric`, you MUST make sure they are NOT of type `factor.` If they are of type `factor`, then they MUST be converted into type `character` first, and THEN into type `numeric`. NEVER directly convert from type `factor` to type `numeric`.
+There are a couple of lessons learned the hard way here. The following examples illustrate these lessons clearly.
+
+```{r }
+c(typeof(12),                               # type of the number 12
+  typeof(as.factor(12)),                    # type of the factorized number 12
+  typeof(as.factor("sample string")),       # type of a factorized string
+  as.double(as.factor(12)),                 # result of converting a factorized 12 to double
+  as.double(as.character(as.factor(12))))   # result of converting a factorized 12 to character then double
+```
+
+```{r }
+# result of converting a factorized numeric array to double
+as.double(as.factor(c(2,6,5)))
+```
+
+```{r }
+# type of a factorized numeric array
+typeof(as.factor(c(2,6,5)))
+```
+
+```{r }
+# result of converting same array to character then double
+as.double(as.character(as.factor(c(2,6,5))))
+```
+
+The hard-learned lessons are:
+
+* When you have a column that has number values and you want to coerce them into type `numeric`, you MUST make sure they are NOT of type `factor.` If they are of type `factor`, then they MUST be converted into type `character` first, and THEN into type `numeric`. NEVER directly convert from type `factor` to type `numeric`.
+* For a variable of type `factor`, the `typeof()` function considers it as an `integer`. It seems that, in the R programming language, integers are not actually numerics. In other words, numerics are always of type `double`, and the type `integer` is always used to indicate factors (even factorized *strings* are considered integers!).
 
 To be specific, our grand mistake was at a previous step where the matrix, `industry_frequencies`, was converted into a data frame. The `as.data.frame()` function has this parameter called `stringsAsFactors`, and you typically want it set to `FALSE` whenever numerics are involved.
 
@@ -431,10 +460,10 @@ And so we continue. Shall we try this visualization thing, again?
 
 ```{r fig.align='center'}
 # convert all columns (which are currently of type 'factor' now) to type 'character'
-industry_frequencies <- map_df(industry_frequencies,as.character)
+industry_frequencies <- map_df(industry_frequencies, as.character)
 
 # convert the numeric columns to type 'numeric'
-industry_frequencies[,c("failed","success")] <- map_df(industry_frequencies[,c("failed","success")],as.numeric)
+industry_frequencies[,c("failed","success")] <- map_df(industry_frequencies[,c("failed","success")], as.numeric)
 
 ggplot(industry_frequencies, aes(x = industry, y = failed)) + # X: industry, Y: #failed companies
   geom_bar(stat="identity") +                                 #
@@ -505,9 +534,79 @@ For the industries with success ratios < 100%, `analytics` seems to be wildly su
 
 On the other side of the spectrum, there exist industries that are wildly UNsuccessful such as `space_travel` and `classifieds`. Although the numbers of companies are not significant enough to draw conclusions, we don't need numbers to tell us that `space_travel` is a tough business to get into :). Other industries with more fails than successes are `music`, `food_beverages` and `search`. 
 
-Industries in the *hit-or-miss* region (~50% success ratio) include `entertainment`,  `network_hosting_infrastructure`, `education` and `telecommunications`. Again, other industries within this *hit-or-miss* region do not have significantly large number of companies to constitute a trend and, as such, will be ignored.
+Industries in the *hit-or-miss* region (~50% success ratio) include `entertainment`, `network_hosting_infrastructure`, `education` and `telecommunications`. Again, other industries within this *hit-or-miss* region do not have a significantly large number of companies to constitute a trend and, as such, will be ignored.
 
-It would be great if we can discover some of kind of global indicator that can help distinguish between the successful and failed startups. Let's see if we can find such an indicator!
+Let's have a look at some of the industries, particularly the failed companies in these industries. We shall start with the `analytics` industry.
+
+```{r }
+analytic_startups_failed <- 
+  startups_industry %>% 
+  filter(analytics == 1, `dependent-company_status` == 'FAILED') %>%
+  select(-`NA`) %>%                                     # not interested in the "NA: industry
+  select(-c(`dependent-company_status`, `analytics`))   # don't need these columns anymore
+
+analytic_startups_failed[,colSums(analytic_startups_failed) > 0] %>% 
+  colSums() %>% 
+  sort()
+```
+
+Nothing particularly interesting here. Let's try the same thing, but with the successful companies of the `analytics` industry.
+
+```{r }
+analytic_startups_success <- 
+  startups_industry %>% 
+  filter(analytics == 1, `dependent-company_status` == 'SUCCESS') %>%
+  select(-`NA`) %>%                                     # not interested in the "NA: industry
+  select(-c(`dependent-company_status`, `analytics`))   # don't need these columns anymore
+
+analytic_startups_success[,colSums(analytic_startups_success) > 0] %>% 
+  colSums() %>% 
+  sort()
+```
+
+The hot industries in `analytics` seems to be the `marketing`, `mobile`, `e-commerce`, `enterprise_software` and `advertising` industries. Let's do some SUCCESS/FAILED comparison.
+
+```{r }
+# summarize the industries within 'analytics'
+analytic_startups_summary <- t(rbind(colSums(analytic_startups_failed), colSums(analytic_startups_success)))
+
+# modify column names
+colnames(analytic_startups_summary) <- c('failed','success')
+
+analytic_startups_summary
+```
+
+The above output would look more interesting visualized.
+
+```{r }
+# add the industries (currently the row names) as a column in 'analytic_startups_summary'
+analytic_startups_summary <- cbind(rownames(analytic_startups_summary), analytic_startups_summary)
+
+# remove the row names
+rownames(analytic_startups_summary) <- NULL
+
+# set the column names
+colnames(analytic_startups_summary) <- c('industry','failed','success')
+
+# convert to data frame
+analytic_startups_summary <- as.data.frame(analytic_startups_summary, stringsAsFactors = FALSE)
+
+# convert the numeric columns to type 'numeric'
+analytic_startups_summary[,c("failed","success")] <- 
+  map_df(analytic_startups_summary[,c("failed","success")], as.numeric)
+       
+analytic_startups_summary %>% 
+  gather("company_status", "n", 2:3) %>% 
+  transform(industry=reorder(industry, -n) ) %>%              # order x-axis labels by '-success'
+  ggplot(aes(x = industry, y = n, fill = company_status)) +   # X: industry, Y: n, fill: company_status
+  geom_bar(stat="identity", show.legend = FALSE) +            #
+  theme(axis.text.x = element_text(angle = 90,                # rotate orientation of x-axis labels
+                                   vjust = 0.3,               # top-align x-axis labels
+                                   hjust = 1))                # right-align x-axis labels
+```
+
+In case you are still wondering, the [ggplot2](https://cran.r-project.org/web/packages/ggplot2/) prefers the data be in a *tidy* format (all variables in columns, all observations in rows, all cells containing a single value each). As far as the `ggplot()` function is concerned, it is expecting us to specify a variable (column) as the x-axis and another variable (column) as the y-axis. This is why the industries were added as a column in the data frame (to be later displayed as the x-axis in the visualization). The `dplyr::gather()` function was used to produce a nice-looking visualization of the entire data together (instead of just either the failed or succesful companies alone).
+
 
 *To be continued...*
 
@@ -522,8 +621,104 @@ Until now I do not know what to do with it
 head(startups$short_description_of_company_profile, 10)
 ```
 
+The NA's will probably cause problems at the DTM generation step later, so let's remove them.
 
+```{r }
+# eliminate NA's
+startups$short_description_of_company_profile[is.na(startups$short_description_of_company_profile)] <- ''
 
+head(startups$short_description_of_company_profile, 10)
+```
+
+Let's carry on and generate the DTM matrix.
+
+```{r }
+# create the corpus object from the short_description_of_company_profile column
+mycorpus <- corpus(startups$short_description_of_company_profile)
+
+# generate the DTM using the formed corpus
+dfm_desc <- dfm(mycorpus,               # the corpus to generate the DTM from
+                tolower = FALSE)        # data is already lowercase
+```
+
+Like before, let's have a look at the DTM before moving on.
+
+```{r }
+# observe the 'terms' of the DTM
+colnames(dfm_desc)
+```
+
+Surfing through the different terms, you can find punctuations (e.g. `)`, `.`, `/`, etc.) as well as some stop words (e.g. `the`, `you`, etc.). Why don't we remove those?
+
+```{r }
+# create the corpus object from the short_description_of_company_profile column
+mycorpus <- corpus(startups$short_description_of_company_profile)
+
+# remove the suffix "'s"
+mycorpus <- gsub(x = mycorpus, pattern = "'s", replacement = "", fixed = TRUE)
+
+# list of stop words
+my_stopwords <- stopwords('english')
+
+# generate the DTM using the formed corpus
+dfm_desc <- dfm(mycorpus,               # the corpus to generate the DTM from
+                remove_punct = TRUE,    # remove punctuation
+                remove_numbers = TRUE,  # remove numbers
+                remove_symbols = TRUE,  # remove symbols
+                remove = my_stopwords,  # remove stopwords
+                tolower = FALSE)        # data is already lowercase
+
+# observe the 'terms' of the DTM
+sort(colnames(dfm_desc))
+```
+
+That's better, but there are terms containing only a single letter. What's up with that? We need to look at some of the records (i.e. companies) that possess these single-lettered terms. By the way, we see the `<U+FB01>nancial` term, but we are just ignoring it for now.
+
+```{r }
+# show the cases having the 'r' term
+startups$short_description_of_company_profile[as.logical(dfm_desc[,"r"])]
+```
+
+```{r }
+# show the cases having the 's' term
+startups$short_description_of_company_profile[as.logical(dfm_desc[,"s"])]
+```
+
+Okay. The `r` term makes sense, but the `s` does not seem very useful. We could remove it by hand, but let's see if there is a more systematic way to do that.
+
+```{r }
+# compute the sums of the columns of the DTM
+colSums(dfm_desc) %>% 
+  head(30)
+```
+
+Let's reproduce the above output again but, this time, let's sort and convert to a data frame. Viewing a datframe has a nicer look to it (one value per row).
+
+```{r }
+colSums(dfm_desc) %>% 
+  sort(decreasing = TRUE) %>% 
+  as.data.frame() %>% 
+  head(30)
+```
+
+Why don't we look at an overall summary of the above output?
+
+```{r }
+colSums(dfm_desc) %>% 
+  sort(decreasing = TRUE) %>% 
+  as.data.frame() %>% 
+  summary()
+```
+
+More than half the terms have the lowest possible frequency, 1. Let's produce a kernel matrix showing similarities between the 10 highest frequency terms and see if we can glean any insights.
+
+```{r }
+getKernel <- function() {
+  krnl <- 
+  return()
+}
+
+```
 
 ### Focus functions of company
 It is a multi-value variable indicate the company foucs.
