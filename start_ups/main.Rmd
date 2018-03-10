@@ -523,12 +523,142 @@ bottom_plot <-
 grid.arrange(top_plot, middle_plot, bottom_plot, ncol=1)
 ```
 
-The above figure confirms what we already know about the data so far, and that is `analytics` dramatically increases the chances that a startup will ultimately succeed.
+The above figure confirms what we already know about the data so far, and that is: `analytics` dramatically increases the chances that a startup will ultimately succeed.
 
+Now that we performed some data analysis revolving around the `analytics` industry, we want to do something systematic over all the industries. First, we want to make sure that, for example, `mobile analytics` and `analytics mobile` to count as two separate industries. We also want to shorten the words for visualization purposes later.
 
+```{r }
+# alphabetically sorts the list of industries for each company
+industrySorter<- function(industries) {
+  if(is.na(industries)) {
+    industries <- ""
+  } 
+  else {
+    industries <-                 # e.g. "gaming entertainment mobile"
+      industries %>%              #
+      strsplit(" ") %>%           # "gaming" "entertainment" "mobile"
+      unlist() %>%                #
+      sort() %>%                  # "entertainment" "gaming" "mobile"
+      tokens() %>%
+      tokens_wordstem() %>%       # "entertain" "game" "mobil"
+      paste(collapse = " ")       # "entertain game mobil"
+  }
+  return(industries)
+}
+startups$industry_of_company <- map_chr(startups$industry_of_company, industrySorter)
 
+startups$industry_of_company %>% 
+  head(10)
+```
+
+```{r }
+# show all the industry combinations in the data and the number of companies in each
+startups%>% 
+  group_by(industry_of_company) %>% 
+  summarise(companies = n()) %>% 
+  arrange(industry_of_company)       # sort industries alphabetically
+```
+
+```{r }
+# show all the industry combinations in the data and the number of companies in each
+startups%>% 
+  group_by(industry_of_company) %>% 
+  summarise(companies = n()) %>% 
+  arrange(desc(companies))       # sort industries by number of companies
+```
+
+Let's try doing something more useful.
+
+```{r }
+# show all the industry combinations in the data and the number of failed/successful companies in each
+startups%>% 
+  group_by(industry_of_company, `dependent-company_status`) %>% 
+  summarise(companies = n()) %>% 
+  arrange(desc(companies))       # sort industries by number of companies
+```
+
+Let's convert the above data into a *tidy* format.
+
+```{r }
+# show all the industry combinations in the data and the number of failed/successful companies in each
+startups%>% 
+  group_by(industry_of_company, `dependent-company_status`) %>% 
+  summarise(companies = n()) %>% 
+  spread(`dependent-company_status`, companies) %>% 
+  arrange(desc(SUCCESS))       # sort industries by number of successful companies
+```
+
+Let's remove the first row (corresponding to the `NA` industry) and replace the NA's within the table with 0's.
+
+```{r }
+my_summarised_startups_industry <- 
+  startups%>% 
+  group_by(industry_of_company, `dependent-company_status`) %>% 
+  summarise(companies = n()) %>% 
+  spread(`dependent-company_status`, companies) %>% 
+  filter(industry_of_company != "") %>% 
+  arrange(desc(SUCCESS))       # sort industries by number of successful companies
+
+# replace the NA's with 0's
+my_summarised_startups_industry[is.na(my_summarised_startups_industry)] <- 0
+
+my_summarised_startups_industry
+```
+
+It appears we have 173 unique indutry combinations in the data. Let's visualize them. Note, however, that these industry combinations would never all fit on the x-axis which is why
+
+```{r fig.align='center'}
+my_summarised_startups_industry %>% 
+  head(25) %>%
+  gather("company_status","n",2:3) %>% 
+  mutate(short_indust = strtrim(industry_of_company, 20)) %>% 
+  transform(short_indust=reorder(short_indust, -n) ) %>%      # order x-axis labels by '-n'
+  ggplot(aes(x=short_indust, y=n, fill=company_status)) +     # X: industry, Y: #successful companies
+  geom_bar(stat="identity") +                                 #
+  theme(axis.text.x = element_text(angle = 90,                # rotate orientation of x-axis labels
+                                   vjust = 0.3,               # top-align x-axis labels
+                                   hjust = 1))                # right-align x-axis labels
+```
+
+Now, let's show the industry combinations with the highest fail rates.
+
+```{r }
+my_summarised_startups_industry <-
+  my_summarised_startups_industry %>% 
+  arrange(desc(FAILED))
+
+my_summarised_startups_industry
+```
+
+```{r fig.align='center'}
+my_summarised_startups_industry %>% 
+  head(25) %>%
+  gather("company_status","n",2:3) %>% 
+  mutate(short_indust = strtrim(industry_of_company, 20)) %>% 
+  transform(short_indust=reorder(short_indust, -n) ) %>%      # order x-axis labels by '-n'
+  ggplot(aes(x=short_indust, y=n, fill=company_status)) +     # X: industry, Y: #successful companies
+  geom_bar(stat="identity") +                                 #
+  theme(axis.text.x = element_text(angle = 90,                # rotate orientation of x-axis labels
+                                   vjust = 0.3,               # top-align x-axis labels
+                                   hjust = 1))                # right-align x-axis labels
+```
 
 *To be continued...*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -659,6 +789,19 @@ It is a multi-value variable. Values are seprated by `|`, and sometimes there ar
 ```{r investors}
 head(startups$investors, 10)
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
