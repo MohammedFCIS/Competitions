@@ -643,6 +643,67 @@ my_summarised_startups_industry %>%
                                    hjust = 1))                # right-align x-axis labels
 ```
 
+Let's have a look at the effect of the company founding date on the chance of success. It may be the case that startups were still getting the hang of it in earlier days and, as time went by, a bunch of common mistakes done by the earlier startups were avoided by the following ones. We will repeat this analysis twice, once for all companies in general and another time for companies that have `analytics` as one of its industries.
+
+```{r fig.align='center'}
+startups %>% 
+  separate(est._founding_date,c("found_year","found_month","found_day"),"-") %>% 
+  filter(!is.na(found_year)) %>% 
+  select(found_year, `dependent-company_status`) %>% 
+  ggplot(aes(x = found_year, fill = `dependent-company_status`)) +
+  geom_histogram(stat="count") +
+  theme(axis.text.x = element_text(angle = 90,                # rotate orientation of x-axis labels
+                                   vjust = 0.4,               # top-align x-axis labels
+                                   hjust = 1))                # right-align x-axis labels
+```
+
+A quick look at the above figure shows that the percentage of successful companies has increased in the last five years. Let's see it in numbers.
+
+```{r }
+startups %>% 
+  separate(est._founding_date,c("found_year","found_month","found_day"),"-") %>% 
+  filter(!is.na(found_year)) %>% 
+  select(found_year,`dependent-company_status`) %>% 
+  group_by(found_year,`dependent-company_status`) %>% 
+  summarise(count = n()) %>% 
+  spread(`dependent-company_status`, count) %>% 
+  replace_na(list(FAILED = 0, SUCCESS = 0)) %>% 
+  mutate(success_percent = SUCCESS / (SUCCESS + FAILED)) %>% 
+  arrange(desc(success_percent))
+```
+
+From the above output, it is clear that the higher success percentages are more towards recent years. The first two rows, (i.e. years 1999 and 2002) have too few companies for their success percentages to be significant, so we'll pretend they are not there.
+
+Now, let's repeat the above couple of steps for `analytics`-inclined companies and see if we get similar observations.
+
+```{r fig.align='center'}
+startups %>% 
+  separate(est._founding_date,c("found_year","found_month","found_day"),"-") %>% 
+  filter(!is.na(found_year) & grepl("analyt", industry_of_company)) %>% 
+  select(found_year, `dependent-company_status`) %>% 
+  ggplot(aes(x = found_year, fill = `dependent-company_status`)) +
+  geom_histogram(stat="count") +
+  theme(axis.text.x = element_text(angle = 90,                # rotate orientation of x-axis labels
+                                   vjust = 0.4,               # top-align x-axis labels
+                                   hjust = 1))                # right-align x-axis labels
+```
+
+```{r }
+startups %>% 
+  separate(est._founding_date,c("found_year","found_month","found_day"),"-") %>% 
+  filter(!is.na(found_year) & grepl("analyt", industry_of_company)) %>% 
+  select(found_year,`dependent-company_status`) %>% 
+  group_by(found_year,`dependent-company_status`) %>% 
+  summarise(count = n()) %>% 
+  spread(`dependent-company_status`, count) %>% 
+  replace_na(list(FAILED = 0, SUCCESS = 0)) %>% 
+  mutate(success_percent = SUCCESS / (SUCCESS + FAILED)) %>% 
+  arrange(desc(success_percent))
+```
+
+From the above figure and results, `analytics` seems to have higher success percentages than those seen for all companies regardless of industry. The lowest osberved success percentage for `analytics` companies was observed in 2006. However, there were only 3 startups in 2006. For the rest of the years, the success percentages were generally quite high (> 80%). Again, these higher percentages are more meaningful for the recent years that have seen more startups.
+
+
 *To be continued...*
 
 
