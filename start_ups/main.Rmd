@@ -747,8 +747,14 @@ Let's carry on and generate the DTM matrix.
 # create the corpus object from the short_description_of_company_profile column
 mycorpus <- corpus(startups$short_description_of_company_profile)
 
+# list of stop words
+my_stopwords <- stopwords('english')
+
 # generate the DTM using the formed corpus
 dfm_desc <- dfm(mycorpus,               # the corpus to generate the DTM from
+                remove_punct = TRUE,    # remove punctuation
+                remove_symbols = TRUE,  # remove symbols
+                remove = my_stopwords,  # remove stopwords
                 tolower = FALSE)        # data is already lowercase
 ```
 
@@ -759,14 +765,15 @@ Like before, let's have a look at the DTM before moving on.
 colnames(dfm_desc)
 ```
 
-Surfing through the different terms, you can find punctuations (e.g. `)`, `.`, `/`, etc.) as well as some stop words (e.g. `the`, `you`, etc.). Why don't we remove those?
+This resulted in 463 distinct terms. Let's see if we can shrink that number further by stemming. There are a few terms that end in *'s* that we will deal with as well. By the way, we see the `<U+FB01>nancial` term, but we are just ignoring it for now.
 
 ```{r }
+# remove the 's
+startups$short_description_of_company_profile <- 
+  gsub(x = startups$short_description_of_company_profile, pattern = '\'s', replacement = '')
+
 # create the corpus object from the short_description_of_company_profile column
 mycorpus <- corpus(startups$short_description_of_company_profile)
-
-# remove the suffix "'s"
-mycorpus <- gsub(x = mycorpus, pattern = "'s", replacement = "", fixed = TRUE)
 
 # list of stop words
 my_stopwords <- stopwords('english')
@@ -774,16 +781,18 @@ my_stopwords <- stopwords('english')
 # generate the DTM using the formed corpus
 dfm_desc <- dfm(mycorpus,               # the corpus to generate the DTM from
                 remove_punct = TRUE,    # remove punctuation
-                remove_numbers = TRUE,  # remove numbers
                 remove_symbols = TRUE,  # remove symbols
                 remove = my_stopwords,  # remove stopwords
                 tolower = FALSE)        # data is already lowercase
 
+# stem the terms of the dfm
+dfm_desc <- dfm_wordstem(dfm_desc)
+
 # observe the 'terms' of the DTM
-sort(colnames(dfm_desc))
+dim(dfm_desc)
 ```
 
-That's better, but there are terms containing only a single letter. What's up with that? We need to look at some of the records (i.e. companies) that possess these single-lettered terms. By the way, we see the `<U+FB01>nancial` term, but we are just ignoring it for now.
+We manged to shrink the number of terms from 463 to 412 terms. We noticed that there are terms containing only a single letter (`r` and `s`). Let's have a look at some of the records (i.e. companies) that possess these single-lettered terms.
 
 ```{r }
 # show the cases having the 'r' term
@@ -795,41 +804,133 @@ startups$short_description_of_company_profile[as.logical(dfm_desc[,"r"])]
 startups$short_description_of_company_profile[as.logical(dfm_desc[,"s"])]
 ```
 
-Okay. The `r` term makes sense, but the `s` does not seem very useful. We could remove it by hand, but let's see if there is a more systematic way to do that.
+Okay. The `r` term makes sense, but the `s` does not seem very useful. Let's remove it.
 
 ```{r }
-# compute the sums of the columns of the DTM
-colSums(dfm_desc) %>% 
-  head(30)
+# remove the 's' term from the DTM
+dfm_desc <- dfm_desc[,-which(colnames(dfm_desc)=='s')]
+
+# confirm 's' column was removed
+dim(dfm_desc)
 ```
 
-Let's reproduce the above output again but, this time, let's sort and convert to a data frame. Viewing a datframe has a nicer look to it (one value per row).
+Since the number of observations (or records) in this dataset is quite low, we are expecting a lot of the terms in the DTM matrix to have only a single occurrence in the dataset. Let's see if we are right.
 
 ```{r }
-colSums(dfm_desc) %>% 
-  sort(decreasing = TRUE) %>% 
-  as.data.frame() %>% 
-  head(30)
+# how many of the terms have single occurrences?
+sum(colSums(dfm_desc) == 1)
 ```
 
-Why don't we look at an overall summary of the above output?
+Indeed, 270 out of 412 terms are single-occurring terms. What about terms with two or less occurrences?
 
 ```{r }
-colSums(dfm_desc) %>% 
-  sort(decreasing = TRUE) %>% 
-  as.data.frame() %>% 
-  summary()
+# how many of the terms have single occurrences?
+sum(colSums(dfm_desc) <= 2)
 ```
 
-More than half the terms have the lowest possible frequency, 1. Let's produce a kernel matrix showing similarities between the 10 highest frequency terms and see if we can glean any insights.
+Let's remove these low-frequency terms and analyze the rest.
 
 ```{r }
-getKernel <- function() {
-  krnl <- 
-  return()
-}
+# remove the low-frequency terms from the DTM
+dfm_desc <- dfm_desc[,-which(colSums(dfm_desc) <= 2)]
 
+# check new size of DTM
+dim(dfm_desc)
 ```
+
+Now, let's see the number of failed/successful companies (plus percentage of successful companies) for each of the remaining 87 terms.
+
+```{r }
+# convert `dfm_desc` to data.frame and bind with response variable
+startups_desc <- cbind(startups[,2], as.data.frame(dfm_desc))
+
+str(startups_desc)
+```
+
+First, let's have a look at the following histogram.
+
+```{r fig.align='center'}
+qplot(colSums(dfm_desc), geom="histogram") 
+```
+
+The majority of the terms are at the low-frequency end, which shouldn't come as a surprise. 
+
+```{r }
+startups_desc%>% 
+  gather("term","binary",2:88) %>% 
+  group_by(term) %>% 
+  summarise(companies = sum(binary == 1)) %>% 
+  arrange(desc(companies))
+```
+
+Another way to show the above information is to display the number of failed and successful companies per term. We do that below.
+
+```{r }
+startups_desc %>% 
+  gather("term","binary",2:88) %>% 
+  group_by(`dependent-company_status`, term) %>% 
+  summarise(frequency = sum(binary)) %>% 
+  spread(`dependent-company_status`, frequency) %>% 
+  mutate(success_percent = SUCCESS/(SUCCESS+FAILED)*100) %>% 
+  arrange(desc(success_percent),desc(SUCCESS)) %>% 
+  as.data.frame()
+```
+
+For some reason, the `analyt` companies sum up to 59, while in the previous table, they were 57 companies. Where did the extra two companies come from? This is a mystery that is yet unsolved. Besides that, let's observe the above table. 
+
+For those terms with 100% success rates, we see terms like `intellig`, `real-tim`, `api` and `dashboard`, which are terms that are related to data science and business intelligence. This suggests that startups in such fields are likely to succeed. This is further confirmed by other terms with slightly smaller success rates like `analyt`, `big`, `data` and `predict`. Other terms that have promising success rates as well are `mobil` and `web`.
+
+For terms hovering around the 50% success mark, the strongest examples are `social`, `media` and `market`. We say 'strongest' due to the high number of companies involved, which increases our confidence in the observed success rate. For these terms, it seems that there are still lessons to be learned for startups that are considering providing services related to such terms. Other terms that seem to involve risky endeavors are `cloud` and `music`.
+
+Finally, we have a look at terms with very low success rates. It is no surprise that terms like `game` and `payment` are on this list. The gaming industry is very competitive and can be really tough to get into, and a payment-faciltating service that can outperform PayPal would not be easy to pull off. Other terms with low success rates are `email`, `host` and `call` which are all communication-related terms.
+
+Let's do a few more visualizations before moving on with our analysis.
+
+```{r fig.align='center'}
+# keep the terms with the highest number of companies
+high_freq_terms <- 
+  startups_desc%>% 
+  gather("term","binary",2:88) %>% 
+  group_by(term) %>% 
+  summarise(companies = sum(binary == 1)) %>% 
+  arrange(desc(companies)) %>%        # sort terms by number of companies
+  head(30) %>% 
+  select(term) %>% 
+  unlist()
+
+startups_desc %>% 
+  gather("term","binary",2:88) %>% 
+  group_by(`dependent-company_status`, term) %>% 
+  summarise(frequency = sum(binary)) %>%
+  filter(term %in% high_freq_terms) %>% 
+  arrange(desc(frequency)) %>% 
+  transform(term=reorder(term, frequency) ) %>%
+  ggplot(aes(x = term, y = frequency, fill = `dependent.company_status`)) +
+  geom_bar(stat = 'identity') +
+  coord_flip()
+```
+
+In the figure above, we focus more on the terms with more companies as we have higher confidence in the patterns include within. That is, we excluded the terms that have a fewer number of companies than the `analysi` term.
+
+Based on the figure above, the terms `social`, `onlin`, `servic`, `softwar` and `network` may warrant further investigation due to their unfavorable success rates.
+
+Before moving on, there is one last thing that we will try. Let's display a correlogram of the 10 most occurring terms and see if there are any interesting observations to be had.
+
+```{r }
+# correlation matrix of the top 10 occurring terms
+corr_data <- cor(as.matrix(dfm_desc[,colSums(dfm_desc) %in% tail(sort(colSums(dfm_desc)),15)]))
+
+library(ggcorrplot)
+ggcorrplot(corr_data,
+           hc.order = TRUE,     # order terms via heirarchical clustering
+           type = "lower",
+           colors = c("tomato2", "white", "springgreen3"))
+```
+
+The two strongest correlating pairs are `big+data` and `social+media`, followed by other pairs such as `analyt+predict`, `predict+solut`, `intellig+solut`, `custom+intellig` and `market+technolog` among others. This correlogram is interesting for uncovering some prevalent trends among startups (e.g. social media and custom intelligence-related solutions). Note that the terms in the figure (which form the labels of the x and y axes) are the most occurring terms in the dataset, meaning that the computed correlations are significant and meaningful.
+
+We end our analysis of the `short_description_of_company_profile` variable here and move on.
+
 
 #### Focus functions of company
 It is a multi-value variable indicate the company foucs.

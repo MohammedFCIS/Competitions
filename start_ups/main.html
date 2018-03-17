@@ -2071,8 +2071,14 @@ head(startups$short_description_of_company_profile, 10)</code></pre>
 <pre class="r"><code># create the corpus object from the short_description_of_company_profile column
 mycorpus &lt;- corpus(startups$short_description_of_company_profile)
 
+# list of stop words
+my_stopwords &lt;- stopwords('english')
+
 # generate the DTM using the formed corpus
 dfm_desc &lt;- dfm(mycorpus,               # the corpus to generate the DTM from
+                remove_punct = TRUE,    # remove punctuation
+                remove_symbols = TRUE,  # remove symbols
+                remove = my_stopwords,  # remove stopwords
                 tolower = FALSE)        # data is already lowercase</code></pre>
 <p>Like before, let’s have a look at the DTM before moving on.</p>
 <pre class="r"><code># observe the 'terms' of the DTM
@@ -2080,257 +2086,242 @@ colnames(dfm_desc)</code></pre>
 <pre><code>##   [1] &quot;video&quot;                 &quot;distribution&quot;         
 ##   [3] &quot;event&quot;                 &quot;data&quot;                 
 ##   [5] &quot;analytics&quot;             &quot;api&quot;                  
-##   [7] &quot;the&quot;                   &quot;most&quot;                 
-##   [9] &quot;advanced&quot;              &quot;for&quot;                  
-##  [11] &quot;mobile&quot;                &quot;location-based&quot;       
-##  [13] &quot;marketing&quot;             &quot;platform&quot;             
-##  [15] &quot;big&quot;                   &quot;foodservice&quot;          
-##  [17] &quot;engagement&quot;            &quot;engine&quot;               
-##  [19] &quot;clinical&quot;              &quot;insight&quot;              
-##  [21] &quot;business&quot;              &quot;human&quot;                
-##  [23] &quot;at&quot;                    &quot;machine&quot;              
-##  [25] &quot;scale&quot;                 &quot;music&quot;                
-##  [27] &quot;industry&quot;              &quot;predictive&quot;           
-##  [29] &quot;healthcare&quot;            &quot;intelligence&quot;         
-##  [31] &quot;water&quot;                 &quot;management&quot;           
-##  [33] &quot;solutions&quot;             &quot;in-store&quot;             
-##  [35] &quot;commerce&quot;              &quot;internet&quot;             
-##  [37] &quot;company&quot;               &quot;social&quot;               
-##  [39] &quot;smart&quot;                 &quot;better&quot;               
-##  [41] &quot;places&quot;                &quot;white&quot;                
-##  [43] &quot;label&quot;                 &quot;web&quot;                  
-##  [45] &quot;investing&quot;             &quot;tools&quot;                
-##  [47] &quot;made&quot;                  &quot;simple&quot;               
-##  [49] &quot;semantic&quot;              &quot;automation&quot;           
-##  [51] &quot;and&quot;                   &quot;storytelling&quot;         
-##  [53] &quot;real-time&quot;             &quot;error&quot;                
-##  [55] &quot;tracking&quot;              &quot;logic&quot;                
-##  [57] &quot;abuse&quot;                 &quot;fraud&quot;                
-##  [59] &quot;protection&quot;            &quot;media&quot;                
-##  [61] &quot;reporting&quot;             &quot;roi&quot;                  
-##  [63] &quot;measurment&quot;            &quot;secure&quot;               
-##  [65] &quot;nosql&quot;                 &quot;database&quot;             
-##  [67] &quot;saas&quot;                  &quot;job&quot;                  
-##  [69] &quot;health&quot;                &quot;care&quot;                 
-##  [71] &quot;shaking&quot;               &quot;up&quot;                   
-##  [73] &quot;publishing&quot;            &quot;energy&quot;               
-##  [75] &quot;efficiency&quot;            &quot;global&quot;               
-##  [77] &quot;multimedia&quot;            &quot;content&quot;              
-##  [79] &quot;suggestions&quot;           &quot;sales&quot;                
-##  [81] &quot;reps&quot;                  &quot;,&quot;                    
-##  [83] &quot;e-commerce&quot;            &quot;consumer&quot;             
-##  [85] &quot;finance&quot;               &quot;connected&quot;            
-##  [87] &quot;marketers&quot;             &quot;&amp;&quot;                    
-##  [89] &quot;ecommerce&quot;             &quot;customer&quot;             
-##  [91] &quot;data-powered&quot;          &quot;enterprise&quot;           
-##  [93] &quot;local&quot;                 &quot;advertising&quot;          
-##  [95] &quot;know&quot;                  &quot;grow&quot;                 
-##  [97] &quot;your&quot;                  &quot;audience&quot;             
-##  [99] &quot;software-as-a-service&quot; &quot;(&quot;                    
-## [101] &quot;)&quot;                     &quot;&lt;U+FB01&gt;nancial&quot;      
-## [103] &quot;terminal&quot;              &quot;of&quot;                   
-## [105] &quot;.&quot;                     &quot;visualization&quot;        
-## [107] &quot;system&quot;                &quot;interactive&quot;          
-## [109] &quot;adaptive&quot;              &quot;language&quot;             
-## [111] &quot;learning&quot;              &quot;shopping&quot;             
-## [113] &quot;lead&quot;                  &quot;generator&quot;            
-## [115] &quot;easy&quot;                  &quot;by&quot;                   
-## [117] &quot;app&quot;                   &quot;technology&quot;           
-## [119] &quot;socset&quot;                &quot;is&quot;                   
-## [121] &quot;a&quot;                     &quot;web-based&quot;            
-## [123] &quot;analytical&quot;            &quot;tool&quot;                 
-## [125] &quot;streaming&quot;             &quot;online&quot;               
-## [127] &quot;statistical&quot;           &quot;analysis&quot;             
-## [129] &quot;beautiful&quot;             &quot;custom&quot;               
-## [131] &quot;infographics&quot;          &quot;software&quot;             
-## [133] &quot;targeting&quot;             &quot;standard&quot;             
-## [135] &quot;reputation&quot;            &quot;powerful&quot;             
-## [137] &quot;confidential&quot;          &quot;in&quot;                   
-## [139] &quot;click&quot;                 &quot;solution&quot;             
-## [141] &quot;personalised&quot;          &quot;recommendations&quot;      
-## [143] &quot;twitter&quot;               &quot;food&quot;                 
-## [145] &quot;influence&quot;             &quot;/&quot;                    
-## [147] &quot;authority&quot;             &quot;research&quot;             
-## [149] &quot;ai&quot;                    &quot;mining&quot;               
-## [151] &quot;action&quot;                &quot;profit&quot;               
-## [153] &quot;network&quot;               &quot;transformation&quot;       
-## [155] &quot;competitions&quot;          &quot;startups&quot;             
-## [157] &quot;dashboard&quot;             &quot;specialists&quot;          
-## [159] &quot;tv&quot;                    &quot;discounts&quot;            
-## [161] &quot;decisions&quot;             &quot;market&quot;               
-## [163] &quot;firm&quot;                  &quot;dashboards&quot;           
-## [165] &quot;experience&quot;            &quot;new&quot;                  
-## [167] &quot;generation&quot;            &quot;cloud&quot;                
-## [169] &quot;computing&quot;             &quot;real&quot;                 
-## [171] &quot;estate&quot;                &quot;broker&quot;               
-## [173] &quot;optimization&quot;          &quot;context&quot;              
-## [175] &quot;info&quot;                  &quot;exchange&quot;             
-## [177] &quot;physician&quot;             &quot;interactions&quot;         
-## [179] &quot;user&quot;                  &quot;generated&quot;            
-## [181] &quot;interest&quot;              &quot;graphs&quot;               
-## [183] &quot;science&quot;               &quot;results&quot;              
-## [185] &quot;verified&quot;              &quot;b2b&quot;                  
-## [187] &quot;contacts&quot;              &quot;competitive&quot;          
-## [189] &quot;technology-enabled&quot;    &quot;electronic&quot;           
-## [191] &quot;payment&quot;               &quot;fabless&quot;              
-## [193] &quot;semiconductors&quot;        &quot;driven&quot;               
-## [195] &quot;website&quot;               &quot;search&quot;               
-## [197] &quot;daily&quot;                 &quot;deals&quot;                
-## [199] &quot;site&quot;                  &quot;html5&quot;                
-## [201] &quot;games&quot;                 &quot;wine&quot;                 
-## [203] &quot;service&quot;               &quot;all&quot;                  
-## [205] &quot;photos&quot;                &quot;everywhere&quot;           
-## [207] &quot;marketplace&quot;           &quot;quality&quot;              
-## [209] &quot;tutoring&quot;              &quot;place&quot;                
-## [211] &quot;people&quot;                &quot;to&quot;                   
-## [213] &quot;talk&quot;                  &quot;about&quot;                
-## [215] &quot;sms&quot;                   &quot;reminders&quot;            
-## [217] &quot;game&quot;                  &quot;development&quot;          
-## [219] &quot;monetization&quot;          &quot;provider&quot;             
-## [221] &quot;relational&quot;            &quot;managment&quot;            
-## [223] &quot;prediction&quot;            &quot;on&quot;                   
-## [225] &quot;open&quot;                  &quot;stack&quot;                
-## [227] &quot;cre&quot;                   &quot;r&quot;                    
-## [229] &quot;professional&quot;          &quot;support&quot;              
-## [231] &quot;inventory&quot;             &quot;square&quot;               
-## [233] &quot;changing&quot;              &quot;how&quot;                  
-## [235] &quot;save&quot;                  &quot;active&quot;               
-## [237] &quot;sql-on-hadoop&quot;         &quot;agriculture&quot;          
-## [239] &quot;performance&quot;           &quot;measurement&quot;          
-## [241] &quot;automatic&quot;             &quot;discovery&quot;            
-## [243] &quot;transforming&quot;          &quot;security&quot;             
-## [245] &quot;risk&quot;                  &quot;conferences&quot;          
-## [247] &quot;unlock&quot;                &quot;email&quot;                
-## [249] &quot;intelligent&quot;           &quot;acquire&quot;              
-## [251] &quot;retain&quot;                &quot;valuable&quot;             
-## [253] &quot;customers&quot;             &quot;peer-to-peer&quot;         
-## [255] &quot;lending&quot;               &quot;bi&quot;                   
-## [257] &quot;opinion's&quot;             &quot;movement&quot;             
-## [259] &quot;public&quot;                &quot;services&quot;             
-## [261] &quot;self-driven&quot;           &quot;exploration&quot;          
-## [263] &quot;suite&quot;                 &quot;visual&quot;               
-## [265] &quot;powered&quot;               &quot;cassandra&quot;            
-## [267] &quot;stream&quot;                &quot;processing&quot;           
-## [269] &quot;doubleclick&quot;           &quot;collection&quot;           
-## [271] &quot;it&quot;                    &quot;patented&quot;             
-## [273] &quot;operations&quot;            &quot;use&quot;                  
-## [275] &quot;monitoring&quot;            &quot;making&quot;               
-## [277] &quot;cities&quot;                &quot;easier&quot;               
-## [279] &quot;love&quot;                  &quot;we&quot;                   
-## [281] &quot;enable&quot;                &quot;dj&quot;                   
-## [283] &quot;golf&quot;                  &quot;improvement&quot;          
-## [285] &quot;time&quot;                  &quot;gain&quot;                 
-## [287] &quot;take&quot;                  &quot;pinterest&quot;            
-## [289] &quot;time-series&quot;           &quot;payments&quot;             
-## [291] &quot;being&quot;                 &quot;step&quot;                 
-## [293] &quot;with&quot;                  &quot;smms&quot;                 
-## [295] &quot;ttwick&quot;                &quot;open-source&quot;          
-## [297] &quot;dbms&quot;                  &quot;trust&quot;                
-## [299] &quot;whatsapp&quot;              &quot;businesses&quot;           
-## [301] &quot;fastest&quot;               &quot;growing&quot;              
-## [303] &quot;talent&quot;                &quot;assessment&quot;           
-## [305] &quot;track&quot;                 &quot;competitors&quot;          
-## [307] &quot;one-click&quot;             &quot;physical&quot;             
-## [309] &quot;world&quot;                 &quot;disruptive&quot;           
-## [311] &quot;root&quot;                  &quot;cause&quot;                
-## [313] &quot;europe&quot;                &quot;card&quot;                 
-## [315] &quot;linked&quot;                &quot;offers&quot;               
-## [317] &quot;reward&quot;                &quot;fans&quot;                 
-## [319] &quot;status&quot;                &quot;browser-based&quot;        
-## [321] &quot;screencast&quot;            &quot;voip&quot;                 
-## [323] &quot;phone&quot;                 &quot;calls&quot;                
-## [325] &quot;phones&quot;                &quot;community&quot;            
-## [327] &quot;writers&quot;               &quot;organizes&quot;            
-## [329] &quot;around&quot;                &quot;hosting&quot;              
-## [331] &quot;call&quot;                  &quot;3.0&quot;                  
-## [333] &quot;team&quot;                  &quot;communication&quot;        
-## [335] &quot;free&quot;                  &quot;low&quot;                  
-## [337] &quot;cost&quot;                  &quot;calling&quot;              
-## [339] &quot;kid's&quot;                 &quot;retailer&quot;             
-## [341] &quot;file&quot;                  &quot;multiplatform&quot;        
-## [343] &quot;gaming&quot;                &quot;agency&quot;               
-## [345] &quot;terms&quot;                 &quot;stunning&quot;             
-## [347] &quot;presentations&quot;         &quot;collaboration&quot;        
-## [349] &quot;promotions&quot;            &quot;cloud-based&quot;          
-## [351] &quot;acceleration&quot;          &quot;tripadvisor&quot;          
-## [353] &quot;hotel&quot;                 &quot;prices&quot;               
-## [355] &quot;movie&quot;                 &quot;curation&quot;             
-## [357] &quot;demand&quot;                &quot;display&quot;              
-## [359] &quot;private&quot;               &quot;news&quot;                 
-## [361] &quot;feeds&quot;                 &quot;teams&quot;                
-## [363] &quot;busines&quot;               &quot;valuation&quot;            
-## [365] &quot;delivering&quot;            &quot;return&quot;               
-## [367] &quot;in-game&quot;               &quot;ios&quot;                  
-## [369] &quot;android&quot;               &quot;crash&quot;                
-## [371] &quot;location&quot;              &quot;testing&quot;              
-## [373] &quot;personalization&quot;       &quot;helping&quot;              
-## [375] &quot;share&quot;                 &quot;subscribe&quot;            
-## [377] &quot;analytic&quot;              &quot;systems&quot;              
-## [379] &quot;student&quot;               &quot;loans&quot;                
-## [381] &quot;activation&quot;            &quot;converting&quot;           
-## [383] &quot;visitors&quot;              &quot;into&quot;                 
-## [385] &quot;capture&quot;               &quot;backup.deliver.trend&quot; 
-## [387] &quot;mailbox&quot;               &quot;s&quot;                    
-## [389] &quot;check&quot;                 &quot;tracks&quot;               
-## [391] &quot;metrics&quot;               &quot;aggregator&quot;           
-## [393] &quot;360â&quot;                  &quot;°&quot;                    
-## [395] &quot;youtube&quot;               &quot;pictures&quot;             
-## [397] &quot;transparent&quot;           &quot;comparison&quot;           
-## [399] &quot;product&quot;               &quot;indoor&quot;               
-## [401] &quot;positioning&quot;           &quot;practical&quot;            
-## [403] &quot;recruiting&quot;            &quot;leveraging&quot;           
-## [405] &quot;emotions&quot;              &quot;voc&quot;                  
-## [407] &quot;cem&quot;                   &quot;controlling&quot;          
-## [409] &quot;out&quot;                   &quot;box&quot;                  
-## [411] &quot;sisu&quot;                  &quot;relations&quot;            
-## [413] &quot;wifi&quot;                  &quot;metaphorical&quot;         
-## [415] &quot;order&quot;                 &quot;drink&quot;                
-## [417] &quot;from&quot;                  &quot;google&quot;               
-## [419] &quot;forms&quot;                 &quot;seek&quot;                 
-## [421] &quot;explore&quot;               &quot;happiness&quot;            
-## [423] &quot;gamification&quot;          &quot;virtualized&quot;          
-## [425] &quot;datacenter&quot;            &quot;ready&quot;                
-## [427] &quot;bloomberg&quot;             &quot;wind&quot;                 
-## [429] &quot;wiki&quot;                  &quot;browser&quot;              
-## [431] &quot;saving&quot;                &quot;one&quot;                  
-## [433] &quot;pixel&quot;                 &quot;salesforce&quot;           
-## [435] &quot;smbs&quot;                  &quot;world's&quot;              
-## [437] &quot;best&quot;                  &quot;scientists&quot;           
-## [439] &quot;daa&quot;                   &quot;unified&quot;              
-## [441] &quot;college&quot;               &quot;prep&quot;                 
-## [443] &quot;done&quot;                  &quot;right&quot;                
-## [445] &quot;ad&quot;                    &quot;complete&quot;             
-## [447] &quot;blog&quot;                  &quot;independent&quot;          
-## [449] &quot;film&quot;                  &quot;networking&quot;           
-## [451] &quot;entertainment&quot;         &quot;based&quot;                
-## [453] &quot;billing&quot;               &quot;hosts&quot;                
-## [455] &quot;storage&quot;               &quot;encrypted&quot;            
-## [457] &quot;collaborative&quot;         &quot;feedback&quot;             
-## [459] &quot;applications&quot;          &quot;behavioral&quot;           
-## [461] &quot;eco-conscious&quot;         &quot;moms&quot;                 
-## [463] &quot;group&quot;                 &quot;targeted&quot;             
-## [465] &quot;sample&quot;                &quot;sale&quot;                 
-## [467] &quot;ask&quot;                   &quot;questions&quot;            
-## [469] &quot;keep&quot;                  &quot;everything&quot;           
-## [471] &quot;you&quot;                   &quot;want&quot;                 
-## [473] &quot;choose&quot;                &quot;price&quot;                
-## [475] &quot;pay&quot;                   &quot;lux&quot;                  
-## [477] &quot;fashion&quot;               &quot;solar&quot;                
-## [479] &quot;installation&quot;          &quot;maker&quot;                
-## [481] &quot;ruby&quot;                  &quot;web-enabled&quot;          
-## [483] &quot;baby&quot;                  &quot;monitors&quot;             
-## [485] &quot;temporary&quot;             &quot;staffing&quot;             
-## [487] &quot;meet&quot;                  &quot;awesome&quot;              
-## [489] &quot;learnable&quot;             &quot;websites&quot;             
-## [491] &quot;no&quot;                    &quot;coding&quot;               
-## [493] &quot;btob&quot;                  &quot;deal&quot;                 
-## [495] &quot;customized&quot;            &quot;forecasting&quot;</code></pre>
-<p>Surfing through the different terms, you can find punctuations (e.g. <code>)</code>, <code>.</code>, <code>/</code>, etc.) as well as some stop words (e.g. <code>the</code>, <code>you</code>, etc.). Why don’t we remove those?</p>
-<pre class="r"><code># create the corpus object from the short_description_of_company_profile column
-mycorpus &lt;- corpus(startups$short_description_of_company_profile)
+##   [7] &quot;advanced&quot;              &quot;mobile&quot;               
+##   [9] &quot;location-based&quot;        &quot;marketing&quot;            
+##  [11] &quot;platform&quot;              &quot;big&quot;                  
+##  [13] &quot;foodservice&quot;           &quot;engagement&quot;           
+##  [15] &quot;engine&quot;                &quot;clinical&quot;             
+##  [17] &quot;insight&quot;               &quot;business&quot;             
+##  [19] &quot;human&quot;                 &quot;machine&quot;              
+##  [21] &quot;scale&quot;                 &quot;music&quot;                
+##  [23] &quot;industry&quot;              &quot;predictive&quot;           
+##  [25] &quot;healthcare&quot;            &quot;intelligence&quot;         
+##  [27] &quot;water&quot;                 &quot;management&quot;           
+##  [29] &quot;solutions&quot;             &quot;in-store&quot;             
+##  [31] &quot;commerce&quot;              &quot;internet&quot;             
+##  [33] &quot;company&quot;               &quot;social&quot;               
+##  [35] &quot;smart&quot;                 &quot;better&quot;               
+##  [37] &quot;places&quot;                &quot;white&quot;                
+##  [39] &quot;label&quot;                 &quot;web&quot;                  
+##  [41] &quot;investing&quot;             &quot;tools&quot;                
+##  [43] &quot;made&quot;                  &quot;simple&quot;               
+##  [45] &quot;semantic&quot;              &quot;automation&quot;           
+##  [47] &quot;storytelling&quot;          &quot;real-time&quot;            
+##  [49] &quot;error&quot;                 &quot;tracking&quot;             
+##  [51] &quot;logic&quot;                 &quot;abuse&quot;                
+##  [53] &quot;fraud&quot;                 &quot;protection&quot;           
+##  [55] &quot;media&quot;                 &quot;reporting&quot;            
+##  [57] &quot;roi&quot;                   &quot;measurment&quot;           
+##  [59] &quot;secure&quot;                &quot;nosql&quot;                
+##  [61] &quot;database&quot;              &quot;saas&quot;                 
+##  [63] &quot;job&quot;                   &quot;health&quot;               
+##  [65] &quot;care&quot;                  &quot;shaking&quot;              
+##  [67] &quot;publishing&quot;            &quot;energy&quot;               
+##  [69] &quot;efficiency&quot;            &quot;global&quot;               
+##  [71] &quot;multimedia&quot;            &quot;content&quot;              
+##  [73] &quot;suggestions&quot;           &quot;sales&quot;                
+##  [75] &quot;reps&quot;                  &quot;e-commerce&quot;           
+##  [77] &quot;consumer&quot;              &quot;finance&quot;              
+##  [79] &quot;connected&quot;             &quot;marketers&quot;            
+##  [81] &quot;ecommerce&quot;             &quot;customer&quot;             
+##  [83] &quot;data-powered&quot;          &quot;enterprise&quot;           
+##  [85] &quot;local&quot;                 &quot;advertising&quot;          
+##  [87] &quot;know&quot;                  &quot;grow&quot;                 
+##  [89] &quot;audience&quot;              &quot;software-as-a-service&quot;
+##  [91] &quot;&lt;U+FB01&gt;nancial&quot;       &quot;terminal&quot;             
+##  [93] &quot;visualization&quot;         &quot;system&quot;               
+##  [95] &quot;interactive&quot;           &quot;adaptive&quot;             
+##  [97] &quot;language&quot;              &quot;learning&quot;             
+##  [99] &quot;shopping&quot;              &quot;lead&quot;                 
+## [101] &quot;generator&quot;             &quot;easy&quot;                 
+## [103] &quot;app&quot;                   &quot;technology&quot;           
+## [105] &quot;socset&quot;                &quot;web-based&quot;            
+## [107] &quot;analytical&quot;            &quot;tool&quot;                 
+## [109] &quot;streaming&quot;             &quot;online&quot;               
+## [111] &quot;statistical&quot;           &quot;analysis&quot;             
+## [113] &quot;beautiful&quot;             &quot;custom&quot;               
+## [115] &quot;infographics&quot;          &quot;software&quot;             
+## [117] &quot;targeting&quot;             &quot;standard&quot;             
+## [119] &quot;reputation&quot;            &quot;powerful&quot;             
+## [121] &quot;confidential&quot;          &quot;click&quot;                
+## [123] &quot;solution&quot;              &quot;personalised&quot;         
+## [125] &quot;recommendations&quot;       &quot;twitter&quot;              
+## [127] &quot;food&quot;                  &quot;influence&quot;            
+## [129] &quot;authority&quot;             &quot;research&quot;             
+## [131] &quot;ai&quot;                    &quot;mining&quot;               
+## [133] &quot;action&quot;                &quot;profit&quot;               
+## [135] &quot;network&quot;               &quot;transformation&quot;       
+## [137] &quot;competitions&quot;          &quot;startups&quot;             
+## [139] &quot;dashboard&quot;             &quot;specialists&quot;          
+## [141] &quot;tv&quot;                    &quot;discounts&quot;            
+## [143] &quot;decisions&quot;             &quot;market&quot;               
+## [145] &quot;firm&quot;                  &quot;dashboards&quot;           
+## [147] &quot;experience&quot;            &quot;new&quot;                  
+## [149] &quot;generation&quot;            &quot;cloud&quot;                
+## [151] &quot;computing&quot;             &quot;real&quot;                 
+## [153] &quot;estate&quot;                &quot;broker&quot;               
+## [155] &quot;optimization&quot;          &quot;context&quot;              
+## [157] &quot;info&quot;                  &quot;exchange&quot;             
+## [159] &quot;physician&quot;             &quot;interactions&quot;         
+## [161] &quot;user&quot;                  &quot;generated&quot;            
+## [163] &quot;interest&quot;              &quot;graphs&quot;               
+## [165] &quot;science&quot;               &quot;results&quot;              
+## [167] &quot;verified&quot;              &quot;b2b&quot;                  
+## [169] &quot;contacts&quot;              &quot;competitive&quot;          
+## [171] &quot;technology-enabled&quot;    &quot;electronic&quot;           
+## [173] &quot;payment&quot;               &quot;fabless&quot;              
+## [175] &quot;semiconductors&quot;        &quot;driven&quot;               
+## [177] &quot;website&quot;               &quot;search&quot;               
+## [179] &quot;daily&quot;                 &quot;deals&quot;                
+## [181] &quot;site&quot;                  &quot;html5&quot;                
+## [183] &quot;games&quot;                 &quot;wine&quot;                 
+## [185] &quot;service&quot;               &quot;photos&quot;               
+## [187] &quot;everywhere&quot;            &quot;marketplace&quot;          
+## [189] &quot;quality&quot;               &quot;tutoring&quot;             
+## [191] &quot;place&quot;                 &quot;people&quot;               
+## [193] &quot;talk&quot;                  &quot;sms&quot;                  
+## [195] &quot;reminders&quot;             &quot;game&quot;                 
+## [197] &quot;development&quot;           &quot;monetization&quot;         
+## [199] &quot;provider&quot;              &quot;relational&quot;           
+## [201] &quot;managment&quot;             &quot;prediction&quot;           
+## [203] &quot;open&quot;                  &quot;stack&quot;                
+## [205] &quot;cre&quot;                   &quot;r&quot;                    
+## [207] &quot;professional&quot;          &quot;support&quot;              
+## [209] &quot;inventory&quot;             &quot;square&quot;               
+## [211] &quot;changing&quot;              &quot;save&quot;                 
+## [213] &quot;active&quot;                &quot;sql-on-hadoop&quot;        
+## [215] &quot;agriculture&quot;           &quot;performance&quot;          
+## [217] &quot;measurement&quot;           &quot;automatic&quot;            
+## [219] &quot;discovery&quot;             &quot;transforming&quot;         
+## [221] &quot;security&quot;              &quot;risk&quot;                 
+## [223] &quot;conferences&quot;           &quot;unlock&quot;               
+## [225] &quot;email&quot;                 &quot;intelligent&quot;          
+## [227] &quot;acquire&quot;               &quot;retain&quot;               
+## [229] &quot;valuable&quot;              &quot;customers&quot;            
+## [231] &quot;peer-to-peer&quot;          &quot;lending&quot;              
+## [233] &quot;bi&quot;                    &quot;opinion's&quot;            
+## [235] &quot;movement&quot;              &quot;public&quot;               
+## [237] &quot;services&quot;              &quot;self-driven&quot;          
+## [239] &quot;exploration&quot;           &quot;suite&quot;                
+## [241] &quot;visual&quot;                &quot;powered&quot;              
+## [243] &quot;cassandra&quot;             &quot;stream&quot;               
+## [245] &quot;processing&quot;            &quot;doubleclick&quot;          
+## [247] &quot;collection&quot;            &quot;patented&quot;             
+## [249] &quot;operations&quot;            &quot;use&quot;                  
+## [251] &quot;monitoring&quot;            &quot;making&quot;               
+## [253] &quot;cities&quot;                &quot;easier&quot;               
+## [255] &quot;love&quot;                  &quot;enable&quot;               
+## [257] &quot;dj&quot;                    &quot;golf&quot;                 
+## [259] &quot;improvement&quot;           &quot;time&quot;                 
+## [261] &quot;gain&quot;                  &quot;take&quot;                 
+## [263] &quot;pinterest&quot;             &quot;time-series&quot;          
+## [265] &quot;payments&quot;              &quot;step&quot;                 
+## [267] &quot;smms&quot;                  &quot;ttwick&quot;               
+## [269] &quot;open-source&quot;           &quot;dbms&quot;                 
+## [271] &quot;trust&quot;                 &quot;whatsapp&quot;             
+## [273] &quot;businesses&quot;            &quot;fastest&quot;              
+## [275] &quot;growing&quot;               &quot;talent&quot;               
+## [277] &quot;assessment&quot;            &quot;track&quot;                
+## [279] &quot;competitors&quot;           &quot;one-click&quot;            
+## [281] &quot;physical&quot;              &quot;world&quot;                
+## [283] &quot;disruptive&quot;            &quot;root&quot;                 
+## [285] &quot;cause&quot;                 &quot;europe&quot;               
+## [287] &quot;card&quot;                  &quot;linked&quot;               
+## [289] &quot;offers&quot;                &quot;reward&quot;               
+## [291] &quot;fans&quot;                  &quot;status&quot;               
+## [293] &quot;browser-based&quot;         &quot;screencast&quot;           
+## [295] &quot;voip&quot;                  &quot;phone&quot;                
+## [297] &quot;calls&quot;                 &quot;phones&quot;               
+## [299] &quot;community&quot;             &quot;writers&quot;              
+## [301] &quot;organizes&quot;             &quot;around&quot;               
+## [303] &quot;hosting&quot;               &quot;call&quot;                 
+## [305] &quot;3.0&quot;                   &quot;team&quot;                 
+## [307] &quot;communication&quot;         &quot;free&quot;                 
+## [309] &quot;low&quot;                   &quot;cost&quot;                 
+## [311] &quot;calling&quot;               &quot;kid's&quot;                
+## [313] &quot;retailer&quot;              &quot;file&quot;                 
+## [315] &quot;multiplatform&quot;         &quot;gaming&quot;               
+## [317] &quot;agency&quot;                &quot;terms&quot;                
+## [319] &quot;stunning&quot;              &quot;presentations&quot;        
+## [321] &quot;collaboration&quot;         &quot;promotions&quot;           
+## [323] &quot;cloud-based&quot;           &quot;acceleration&quot;         
+## [325] &quot;tripadvisor&quot;           &quot;hotel&quot;                
+## [327] &quot;prices&quot;                &quot;movie&quot;                
+## [329] &quot;curation&quot;              &quot;demand&quot;               
+## [331] &quot;display&quot;               &quot;private&quot;              
+## [333] &quot;news&quot;                  &quot;feeds&quot;                
+## [335] &quot;teams&quot;                 &quot;busines&quot;              
+## [337] &quot;valuation&quot;             &quot;delivering&quot;           
+## [339] &quot;return&quot;                &quot;in-game&quot;              
+## [341] &quot;ios&quot;                   &quot;android&quot;              
+## [343] &quot;crash&quot;                 &quot;location&quot;             
+## [345] &quot;testing&quot;               &quot;personalization&quot;      
+## [347] &quot;helping&quot;               &quot;share&quot;                
+## [349] &quot;subscribe&quot;             &quot;analytic&quot;             
+## [351] &quot;systems&quot;               &quot;student&quot;              
+## [353] &quot;loans&quot;                 &quot;activation&quot;           
+## [355] &quot;converting&quot;            &quot;visitors&quot;             
+## [357] &quot;capture&quot;               &quot;backup.deliver.trend&quot; 
+## [359] &quot;mailbox&quot;               &quot;s&quot;                    
+## [361] &quot;check&quot;                 &quot;tracks&quot;               
+## [363] &quot;metrics&quot;               &quot;aggregator&quot;           
+## [365] &quot;360â&quot;                  &quot;youtube&quot;              
+## [367] &quot;pictures&quot;              &quot;transparent&quot;          
+## [369] &quot;comparison&quot;            &quot;product&quot;              
+## [371] &quot;indoor&quot;                &quot;positioning&quot;          
+## [373] &quot;practical&quot;             &quot;recruiting&quot;           
+## [375] &quot;leveraging&quot;            &quot;emotions&quot;             
+## [377] &quot;voc&quot;                   &quot;cem&quot;                  
+## [379] &quot;controlling&quot;           &quot;box&quot;                  
+## [381] &quot;sisu&quot;                  &quot;relations&quot;            
+## [383] &quot;wifi&quot;                  &quot;metaphorical&quot;         
+## [385] &quot;order&quot;                 &quot;drink&quot;                
+## [387] &quot;google&quot;                &quot;forms&quot;                
+## [389] &quot;seek&quot;                  &quot;explore&quot;              
+## [391] &quot;happiness&quot;             &quot;gamification&quot;         
+## [393] &quot;virtualized&quot;           &quot;datacenter&quot;           
+## [395] &quot;ready&quot;                 &quot;bloomberg&quot;            
+## [397] &quot;wind&quot;                  &quot;wiki&quot;                 
+## [399] &quot;browser&quot;               &quot;saving&quot;               
+## [401] &quot;one&quot;                   &quot;pixel&quot;                
+## [403] &quot;salesforce&quot;            &quot;smbs&quot;                 
+## [405] &quot;world's&quot;               &quot;best&quot;                 
+## [407] &quot;scientists&quot;            &quot;daa&quot;                  
+## [409] &quot;unified&quot;               &quot;college&quot;              
+## [411] &quot;prep&quot;                  &quot;done&quot;                 
+## [413] &quot;right&quot;                 &quot;ad&quot;                   
+## [415] &quot;complete&quot;              &quot;blog&quot;                 
+## [417] &quot;independent&quot;           &quot;film&quot;                 
+## [419] &quot;networking&quot;            &quot;entertainment&quot;        
+## [421] &quot;based&quot;                 &quot;billing&quot;              
+## [423] &quot;hosts&quot;                 &quot;storage&quot;              
+## [425] &quot;encrypted&quot;             &quot;collaborative&quot;        
+## [427] &quot;feedback&quot;              &quot;applications&quot;         
+## [429] &quot;behavioral&quot;            &quot;eco-conscious&quot;        
+## [431] &quot;moms&quot;                  &quot;group&quot;                
+## [433] &quot;targeted&quot;              &quot;sample&quot;               
+## [435] &quot;sale&quot;                  &quot;ask&quot;                  
+## [437] &quot;questions&quot;             &quot;keep&quot;                 
+## [439] &quot;everything&quot;            &quot;want&quot;                 
+## [441] &quot;choose&quot;                &quot;price&quot;                
+## [443] &quot;pay&quot;                   &quot;lux&quot;                  
+## [445] &quot;fashion&quot;               &quot;solar&quot;                
+## [447] &quot;installation&quot;          &quot;maker&quot;                
+## [449] &quot;ruby&quot;                  &quot;web-enabled&quot;          
+## [451] &quot;baby&quot;                  &quot;monitors&quot;             
+## [453] &quot;temporary&quot;             &quot;staffing&quot;             
+## [455] &quot;meet&quot;                  &quot;awesome&quot;              
+## [457] &quot;learnable&quot;             &quot;websites&quot;             
+## [459] &quot;coding&quot;                &quot;btob&quot;                 
+## [461] &quot;deal&quot;                  &quot;customized&quot;           
+## [463] &quot;forecasting&quot;</code></pre>
+<p>This resulted in 463 distinct terms. Let’s see if we can shrink that number further by stemming. There are a few terms that end in <em>’s</em> that we will deal with as well. By the way, we see the <code>&lt;U+FB01&gt;nancial</code> term, but we are just ignoring it for now.</p>
+<pre class="r"><code># remove the 's
+startups$short_description_of_company_profile &lt;- 
+  gsub(x = startups$short_description_of_company_profile, pattern = '\'s', replacement = '')
 
-# remove the suffix &quot;'s&quot;
-mycorpus &lt;- gsub(x = mycorpus, pattern = &quot;'s&quot;, replacement = &quot;&quot;, fixed = TRUE)
+# create the corpus object from the short_description_of_company_profile column
+mycorpus &lt;- corpus(startups$short_description_of_company_profile)
 
 # list of stop words
 my_stopwords &lt;- stopwords('english')
@@ -2338,320 +2329,302 @@ my_stopwords &lt;- stopwords('english')
 # generate the DTM using the formed corpus
 dfm_desc &lt;- dfm(mycorpus,               # the corpus to generate the DTM from
                 remove_punct = TRUE,    # remove punctuation
-                remove_numbers = TRUE,  # remove numbers
                 remove_symbols = TRUE,  # remove symbols
                 remove = my_stopwords,  # remove stopwords
                 tolower = FALSE)        # data is already lowercase
 
+# stem the terms of the dfm
+dfm_desc &lt;- dfm_wordstem(dfm_desc)
+
 # observe the 'terms' of the DTM
-sort(colnames(dfm_desc))</code></pre>
-<pre><code>##   [1] &quot;&lt;U+FB01&gt;nancial&quot;       &quot;360â&quot;                 
-##   [3] &quot;abuse&quot;                 &quot;acceleration&quot;         
-##   [5] &quot;acquire&quot;               &quot;action&quot;               
-##   [7] &quot;activation&quot;            &quot;active&quot;               
-##   [9] &quot;ad&quot;                    &quot;adaptive&quot;             
-##  [11] &quot;advanced&quot;              &quot;advertising&quot;          
-##  [13] &quot;agency&quot;                &quot;aggregator&quot;           
-##  [15] &quot;agriculture&quot;           &quot;ai&quot;                   
-##  [17] &quot;analysis&quot;              &quot;analytic&quot;             
-##  [19] &quot;analytical&quot;            &quot;analytics&quot;            
-##  [21] &quot;android&quot;               &quot;api&quot;                  
-##  [23] &quot;app&quot;                   &quot;applications&quot;         
-##  [25] &quot;around&quot;                &quot;ask&quot;                  
-##  [27] &quot;assessment&quot;            &quot;audience&quot;             
-##  [29] &quot;authority&quot;             &quot;automatic&quot;            
-##  [31] &quot;automation&quot;            &quot;awesome&quot;              
-##  [33] &quot;b2b&quot;                   &quot;baby&quot;                 
-##  [35] &quot;backup.deliver.trend&quot;  &quot;based&quot;                
-##  [37] &quot;beautiful&quot;             &quot;behavioral&quot;           
-##  [39] &quot;best&quot;                  &quot;better&quot;               
-##  [41] &quot;bi&quot;                    &quot;big&quot;                  
-##  [43] &quot;billing&quot;               &quot;blog&quot;                 
-##  [45] &quot;bloomberg&quot;             &quot;box&quot;                  
-##  [47] &quot;broker&quot;                &quot;browser&quot;              
-##  [49] &quot;browser-based&quot;         &quot;btob&quot;                 
-##  [51] &quot;busines&quot;               &quot;business&quot;             
-##  [53] &quot;businesses&quot;            &quot;call&quot;                 
-##  [55] &quot;calling&quot;               &quot;calls&quot;                
-##  [57] &quot;capture&quot;               &quot;card&quot;                 
-##  [59] &quot;care&quot;                  &quot;cassandra&quot;            
-##  [61] &quot;cause&quot;                 &quot;cem&quot;                  
-##  [63] &quot;changing&quot;              &quot;check&quot;                
-##  [65] &quot;choose&quot;                &quot;cities&quot;               
-##  [67] &quot;click&quot;                 &quot;clinical&quot;             
-##  [69] &quot;cloud&quot;                 &quot;cloud-based&quot;          
-##  [71] &quot;coding&quot;                &quot;collaboration&quot;        
-##  [73] &quot;collaborative&quot;         &quot;collection&quot;           
-##  [75] &quot;college&quot;               &quot;commerce&quot;             
-##  [77] &quot;communication&quot;         &quot;community&quot;            
-##  [79] &quot;company&quot;               &quot;comparison&quot;           
-##  [81] &quot;competitions&quot;          &quot;competitive&quot;          
-##  [83] &quot;competitors&quot;           &quot;complete&quot;             
-##  [85] &quot;computing&quot;             &quot;conferences&quot;          
-##  [87] &quot;confidential&quot;          &quot;connected&quot;            
-##  [89] &quot;consumer&quot;              &quot;contacts&quot;             
-##  [91] &quot;content&quot;               &quot;context&quot;              
-##  [93] &quot;controlling&quot;           &quot;converting&quot;           
-##  [95] &quot;cost&quot;                  &quot;crash&quot;                
-##  [97] &quot;cre&quot;                   &quot;curation&quot;             
-##  [99] &quot;custom&quot;                &quot;customer&quot;             
-## [101] &quot;customers&quot;             &quot;customized&quot;           
-## [103] &quot;daa&quot;                   &quot;daily&quot;                
-## [105] &quot;dashboard&quot;             &quot;dashboards&quot;           
-## [107] &quot;data&quot;                  &quot;data-powered&quot;         
-## [109] &quot;database&quot;              &quot;datacenter&quot;           
-## [111] &quot;dbms&quot;                  &quot;deal&quot;                 
-## [113] &quot;deals&quot;                 &quot;decisions&quot;            
-## [115] &quot;delivering&quot;            &quot;demand&quot;               
-## [117] &quot;development&quot;           &quot;discounts&quot;            
-## [119] &quot;discovery&quot;             &quot;display&quot;              
-## [121] &quot;disruptive&quot;            &quot;distribution&quot;         
-## [123] &quot;dj&quot;                    &quot;done&quot;                 
-## [125] &quot;doubleclick&quot;           &quot;drink&quot;                
-## [127] &quot;driven&quot;                &quot;e-commerce&quot;           
-## [129] &quot;easier&quot;                &quot;easy&quot;                 
-## [131] &quot;eco-conscious&quot;         &quot;ecommerce&quot;            
-## [133] &quot;efficiency&quot;            &quot;electronic&quot;           
-## [135] &quot;email&quot;                 &quot;emotions&quot;             
-## [137] &quot;enable&quot;                &quot;encrypted&quot;            
-## [139] &quot;energy&quot;                &quot;engagement&quot;           
-## [141] &quot;engine&quot;                &quot;enterprise&quot;           
-## [143] &quot;entertainment&quot;         &quot;error&quot;                
-## [145] &quot;estate&quot;                &quot;europe&quot;               
-## [147] &quot;event&quot;                 &quot;everything&quot;           
-## [149] &quot;everywhere&quot;            &quot;exchange&quot;             
-## [151] &quot;experience&quot;            &quot;exploration&quot;          
-## [153] &quot;explore&quot;               &quot;fabless&quot;              
-## [155] &quot;fans&quot;                  &quot;fashion&quot;              
-## [157] &quot;fastest&quot;               &quot;feedback&quot;             
-## [159] &quot;feeds&quot;                 &quot;file&quot;                 
-## [161] &quot;film&quot;                  &quot;finance&quot;              
-## [163] &quot;firm&quot;                  &quot;food&quot;                 
-## [165] &quot;foodservice&quot;           &quot;forecasting&quot;          
-## [167] &quot;forms&quot;                 &quot;fraud&quot;                
-## [169] &quot;free&quot;                  &quot;gain&quot;                 
-## [171] &quot;game&quot;                  &quot;games&quot;                
-## [173] &quot;gamification&quot;          &quot;gaming&quot;               
-## [175] &quot;generated&quot;             &quot;generation&quot;           
-## [177] &quot;generator&quot;             &quot;global&quot;               
-## [179] &quot;golf&quot;                  &quot;google&quot;               
-## [181] &quot;graphs&quot;                &quot;group&quot;                
-## [183] &quot;grow&quot;                  &quot;growing&quot;              
-## [185] &quot;happiness&quot;             &quot;health&quot;               
-## [187] &quot;healthcare&quot;            &quot;helping&quot;              
-## [189] &quot;hosting&quot;               &quot;hosts&quot;                
-## [191] &quot;hotel&quot;                 &quot;html5&quot;                
-## [193] &quot;human&quot;                 &quot;improvement&quot;          
-## [195] &quot;in-game&quot;               &quot;in-store&quot;             
-## [197] &quot;independent&quot;           &quot;indoor&quot;               
-## [199] &quot;industry&quot;              &quot;influence&quot;            
-## [201] &quot;info&quot;                  &quot;infographics&quot;         
-## [203] &quot;insight&quot;               &quot;installation&quot;         
-## [205] &quot;intelligence&quot;          &quot;intelligent&quot;          
-## [207] &quot;interactions&quot;          &quot;interactive&quot;          
-## [209] &quot;interest&quot;              &quot;internet&quot;             
-## [211] &quot;inventory&quot;             &quot;investing&quot;            
-## [213] &quot;ios&quot;                   &quot;job&quot;                  
-## [215] &quot;keep&quot;                  &quot;kid&quot;                  
-## [217] &quot;know&quot;                  &quot;label&quot;                
-## [219] &quot;language&quot;              &quot;lead&quot;                 
-## [221] &quot;learnable&quot;             &quot;learning&quot;             
-## [223] &quot;lending&quot;               &quot;leveraging&quot;           
-## [225] &quot;linked&quot;                &quot;loans&quot;                
-## [227] &quot;local&quot;                 &quot;location&quot;             
-## [229] &quot;location-based&quot;        &quot;logic&quot;                
-## [231] &quot;love&quot;                  &quot;low&quot;                  
-## [233] &quot;lux&quot;                   &quot;machine&quot;              
-## [235] &quot;made&quot;                  &quot;mailbox&quot;              
-## [237] &quot;maker&quot;                 &quot;making&quot;               
-## [239] &quot;management&quot;            &quot;managment&quot;            
-## [241] &quot;market&quot;                &quot;marketers&quot;            
-## [243] &quot;marketing&quot;             &quot;marketplace&quot;          
-## [245] &quot;measurement&quot;           &quot;measurment&quot;           
-## [247] &quot;media&quot;                 &quot;meet&quot;                 
-## [249] &quot;metaphorical&quot;          &quot;metrics&quot;              
-## [251] &quot;mining&quot;                &quot;mobile&quot;               
-## [253] &quot;moms&quot;                  &quot;monetization&quot;         
-## [255] &quot;monitoring&quot;            &quot;monitors&quot;             
-## [257] &quot;movement&quot;              &quot;movie&quot;                
-## [259] &quot;multimedia&quot;            &quot;multiplatform&quot;        
-## [261] &quot;music&quot;                 &quot;network&quot;              
-## [263] &quot;networking&quot;            &quot;new&quot;                  
-## [265] &quot;news&quot;                  &quot;nosql&quot;                
-## [267] &quot;offers&quot;                &quot;one&quot;                  
-## [269] &quot;one-click&quot;             &quot;online&quot;               
-## [271] &quot;open&quot;                  &quot;open-source&quot;          
-## [273] &quot;operations&quot;            &quot;opinion&quot;              
-## [275] &quot;optimization&quot;          &quot;order&quot;                
-## [277] &quot;organizes&quot;             &quot;patented&quot;             
-## [279] &quot;pay&quot;                   &quot;payment&quot;              
-## [281] &quot;payments&quot;              &quot;peer-to-peer&quot;         
-## [283] &quot;people&quot;                &quot;performance&quot;          
-## [285] &quot;personalised&quot;          &quot;personalization&quot;      
-## [287] &quot;phone&quot;                 &quot;phones&quot;               
-## [289] &quot;photos&quot;                &quot;physical&quot;             
-## [291] &quot;physician&quot;             &quot;pictures&quot;             
-## [293] &quot;pinterest&quot;             &quot;pixel&quot;                
-## [295] &quot;place&quot;                 &quot;places&quot;               
-## [297] &quot;platform&quot;              &quot;positioning&quot;          
-## [299] &quot;powered&quot;               &quot;powerful&quot;             
-## [301] &quot;practical&quot;             &quot;prediction&quot;           
-## [303] &quot;predictive&quot;            &quot;prep&quot;                 
-## [305] &quot;presentations&quot;         &quot;price&quot;                
-## [307] &quot;prices&quot;                &quot;private&quot;              
-## [309] &quot;processing&quot;            &quot;product&quot;              
-## [311] &quot;professional&quot;          &quot;profit&quot;               
-## [313] &quot;promotions&quot;            &quot;protection&quot;           
-## [315] &quot;provider&quot;              &quot;public&quot;               
-## [317] &quot;publishing&quot;            &quot;quality&quot;              
-## [319] &quot;questions&quot;             &quot;r&quot;                    
-## [321] &quot;ready&quot;                 &quot;real&quot;                 
-## [323] &quot;real-time&quot;             &quot;recommendations&quot;      
-## [325] &quot;recruiting&quot;            &quot;relational&quot;           
-## [327] &quot;relations&quot;             &quot;reminders&quot;            
-## [329] &quot;reporting&quot;             &quot;reps&quot;                 
-## [331] &quot;reputation&quot;            &quot;research&quot;             
-## [333] &quot;results&quot;               &quot;retailer&quot;             
-## [335] &quot;retain&quot;                &quot;return&quot;               
-## [337] &quot;reward&quot;                &quot;right&quot;                
-## [339] &quot;risk&quot;                  &quot;roi&quot;                  
-## [341] &quot;root&quot;                  &quot;ruby&quot;                 
-## [343] &quot;s&quot;                     &quot;saas&quot;                 
-## [345] &quot;sale&quot;                  &quot;sales&quot;                
-## [347] &quot;salesforce&quot;            &quot;sample&quot;               
-## [349] &quot;save&quot;                  &quot;saving&quot;               
-## [351] &quot;scale&quot;                 &quot;science&quot;              
-## [353] &quot;scientists&quot;            &quot;screencast&quot;           
-## [355] &quot;search&quot;                &quot;secure&quot;               
-## [357] &quot;security&quot;              &quot;seek&quot;                 
-## [359] &quot;self-driven&quot;           &quot;semantic&quot;             
-## [361] &quot;semiconductors&quot;        &quot;service&quot;              
-## [363] &quot;services&quot;              &quot;shaking&quot;              
-## [365] &quot;share&quot;                 &quot;shopping&quot;             
-## [367] &quot;simple&quot;                &quot;sisu&quot;                 
-## [369] &quot;site&quot;                  &quot;smart&quot;                
-## [371] &quot;smbs&quot;                  &quot;smms&quot;                 
-## [373] &quot;sms&quot;                   &quot;social&quot;               
-## [375] &quot;socset&quot;                &quot;software&quot;             
-## [377] &quot;software-as-a-service&quot; &quot;solar&quot;                
-## [379] &quot;solution&quot;              &quot;solutions&quot;            
-## [381] &quot;specialists&quot;           &quot;sql-on-hadoop&quot;        
-## [383] &quot;square&quot;                &quot;stack&quot;                
-## [385] &quot;staffing&quot;              &quot;standard&quot;             
-## [387] &quot;startups&quot;              &quot;statistical&quot;          
-## [389] &quot;status&quot;                &quot;step&quot;                 
-## [391] &quot;storage&quot;               &quot;storytelling&quot;         
-## [393] &quot;stream&quot;                &quot;streaming&quot;            
-## [395] &quot;student&quot;               &quot;stunning&quot;             
-## [397] &quot;subscribe&quot;             &quot;suggestions&quot;          
-## [399] &quot;suite&quot;                 &quot;support&quot;              
-## [401] &quot;system&quot;                &quot;systems&quot;              
-## [403] &quot;take&quot;                  &quot;talent&quot;               
-## [405] &quot;talk&quot;                  &quot;targeted&quot;             
-## [407] &quot;targeting&quot;             &quot;team&quot;                 
-## [409] &quot;teams&quot;                 &quot;technology&quot;           
-## [411] &quot;technology-enabled&quot;    &quot;temporary&quot;            
-## [413] &quot;terminal&quot;              &quot;terms&quot;                
-## [415] &quot;testing&quot;               &quot;time&quot;                 
-## [417] &quot;time-series&quot;           &quot;tool&quot;                 
-## [419] &quot;tools&quot;                 &quot;track&quot;                
-## [421] &quot;tracking&quot;              &quot;tracks&quot;               
-## [423] &quot;transformation&quot;        &quot;transforming&quot;         
-## [425] &quot;transparent&quot;           &quot;tripadvisor&quot;          
-## [427] &quot;trust&quot;                 &quot;ttwick&quot;               
-## [429] &quot;tutoring&quot;              &quot;tv&quot;                   
-## [431] &quot;twitter&quot;               &quot;unified&quot;              
-## [433] &quot;unlock&quot;                &quot;use&quot;                  
-## [435] &quot;user&quot;                  &quot;valuable&quot;             
-## [437] &quot;valuation&quot;             &quot;verified&quot;             
-## [439] &quot;video&quot;                 &quot;virtualized&quot;          
-## [441] &quot;visitors&quot;              &quot;visual&quot;               
-## [443] &quot;visualization&quot;         &quot;voc&quot;                  
-## [445] &quot;voip&quot;                  &quot;want&quot;                 
-## [447] &quot;water&quot;                 &quot;web&quot;                  
-## [449] &quot;web-based&quot;             &quot;web-enabled&quot;          
-## [451] &quot;website&quot;               &quot;websites&quot;             
-## [453] &quot;whatsapp&quot;              &quot;white&quot;                
-## [455] &quot;wifi&quot;                  &quot;wiki&quot;                 
-## [457] &quot;wind&quot;                  &quot;wine&quot;                 
-## [459] &quot;world&quot;                 &quot;writers&quot;              
-## [461] &quot;youtube&quot;</code></pre>
-<p>That’s better, but there are terms containing only a single letter. What’s up with that? We need to look at some of the records (i.e. companies) that possess these single-lettered terms. By the way, we see the <code>&lt;U+FB01&gt;nancial</code> term, but we are just ignoring it for now.</p>
+dim(dfm_desc)</code></pre>
+<pre><code>## [1] 472 412</code></pre>
+<p>We manged to shrink the number of terms from 463 to 412 terms. We noticed that there are terms containing only a single letter (<code>r</code> and <code>s</code>). Let’s have a look at some of the records (i.e. companies) that possess these single-lettered terms.</p>
 <pre class="r"><code># show the cases having the 'r' term
 startups$short_description_of_company_profile[as.logical(dfm_desc[,&quot;r&quot;])]</code></pre>
 <pre><code>## [1] &quot;r language professional support&quot;</code></pre>
 <pre class="r"><code># show the cases having the 's' term
 startups$short_description_of_company_profile[as.logical(dfm_desc[,&quot;s&quot;])]</code></pre>
 <pre><code>## [1] &quot;mailbox web service api s&quot;</code></pre>
-<p>Okay. The <code>r</code> term makes sense, but the <code>s</code> does not seem very useful. We could remove it by hand, but let’s see if there is a more systematic way to do that.</p>
-<pre class="r"><code># compute the sums of the columns of the DTM
-colSums(dfm_desc) %&gt;% 
-  head(30)</code></pre>
-<pre><code>##          video   distribution          event           data      analytics 
-##              7              3              1             44             57 
-##            api       advanced         mobile location-based      marketing 
-##              4              4             16              2             25 
-##       platform            big    foodservice     engagement         engine 
-##             25             21              1              3              5 
-##       clinical        insight       business          human        machine 
-##              1              5              8              1              2 
-##          scale          music       industry     predictive     healthcare 
-##              2              5              1              8              3 
-##   intelligence          water     management      solutions       in-store 
-##             11              1              8              9              4</code></pre>
-<p>Let’s reproduce the above output again but, this time, let’s sort and convert to a data frame. Viewing a datframe has a nicer look to it (one value per row).</p>
-<pre class="r"><code>colSums(dfm_desc) %&gt;% 
-  sort(decreasing = TRUE) %&gt;% 
-  as.data.frame() %&gt;% 
-  head(30)</code></pre>
-<pre><code>##               .
-## analytics    57
-## data         44
-## social       39
-## media        26
-## marketing    25
-## platform     25
-## big          21
-## mobile       16
-## web          12
-## online       12
-## intelligence 11
-## customer     11
-## solutions     9
-## real-time     9
-## technology    9
-## business      8
-## predictive    8
-## management    8
-## software      8
-## service       8
-## video         7
-## database      7
-## saas          7
-## advertising   7
-## cloud         7
-## company       6
-## analysis      6
-## research      6
-## people        6
-## time          6</code></pre>
-<p>Why don’t we look at an overall summary of the above output?</p>
-<pre class="r"><code>colSums(dfm_desc) %&gt;% 
-  sort(decreasing = TRUE) %&gt;% 
-  as.data.frame() %&gt;% 
-  summary()</code></pre>
-<pre><code>##        .         
-##  Min.   : 1.000  
-##  1st Qu.: 1.000  
-##  Median : 1.000  
-##  Mean   : 2.282  
-##  3rd Qu.: 2.000  
-##  Max.   :57.000</code></pre>
-<p>More than half the terms have the lowest possible frequency, 1. Let’s produce a kernel matrix showing similarities between the 10 highest frequency terms and see if we can glean any insights.</p>
-<pre class="r"><code>getKernel &lt;- function() {
-  krnl &lt;- 
-  return()
-}</code></pre>
+<p>Okay. The <code>r</code> term makes sense, but the <code>s</code> does not seem very useful. Let’s remove it.</p>
+<pre class="r"><code># remove the 's' term from the DTM
+dfm_desc &lt;- dfm_desc[,-which(colnames(dfm_desc)=='s')]
+
+# confirm 's' column was removed
+dim(dfm_desc)</code></pre>
+<pre><code>## [1] 472 411</code></pre>
+<p>Since the number of observations (or records) in this dataset is quite low, we are expecting a lot of the terms in the DTM matrix to have only a single occurrence in the dataset. Let’s see if we are right.</p>
+<pre class="r"><code># how many of the terms have single occurrences?
+sum(colSums(dfm_desc) == 1)</code></pre>
+<pre><code>## [1] 270</code></pre>
+<p>Indeed, 270 out of 412 terms are single-occurring terms. What about terms with two or less occurrences?</p>
+<pre class="r"><code># how many of the terms have single occurrences?
+sum(colSums(dfm_desc) &lt;= 2)</code></pre>
+<pre><code>## [1] 324</code></pre>
+<p>Let’s remove these low-frequency terms and analyze the rest.</p>
+<pre class="r"><code># remove the low-frequency terms from the DTM
+dfm_desc &lt;- dfm_desc[,-which(colSums(dfm_desc) &lt;= 2)]
+
+# check new size of DTM
+dim(dfm_desc)</code></pre>
+<pre><code>## [1] 472  87</code></pre>
+<p>Now, let’s see the number of failed/successful companies (plus percentage of successful companies) for each of the remaining 87 terms.</p>
+<pre class="r"><code># convert `dfm_desc` to data.frame and bind with response variable
+startups_desc &lt;- cbind(startups[,2], as.data.frame(dfm_desc))
+
+str(startups_desc)</code></pre>
+<pre><code>## 'data.frame':    472 obs. of  88 variables:
+##  $ dependent-company_status: Factor w/ 2 levels &quot;FAILED&quot;,&quot;SUCCESS&quot;: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ video                   : num  1 0 0 0 0 0 0 0 0 0 ...
+##  $ distribut               : num  1 0 0 0 0 0 0 0 0 0 ...
+##  $ data                    : num  0 0 1 0 0 1 0 0 0 1 ...
+##  $ analyt                  : num  0 0 1 1 0 0 0 0 0 0 ...
+##  $ api                     : num  0 0 1 0 0 0 0 0 0 0 ...
+##  $ advanc                  : num  0 0 0 1 0 0 0 0 0 0 ...
+##  $ mobil                   : num  0 0 0 1 0 0 0 0 0 0 ...
+##  $ market                  : num  0 0 0 0 1 0 0 0 0 0 ...
+##  $ platform                : num  0 0 0 0 1 0 0 0 0 0 ...
+##  $ big                     : num  0 0 0 0 0 1 0 0 0 1 ...
+##  $ engag                   : num  0 0 0 0 0 0 0 0 1 0 ...
+##  $ engin                   : num  0 0 0 0 0 0 0 0 1 0 ...
+##  $ insight                 : num  0 0 0 0 0 0 0 0 0 1 ...
+##  $ busi                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ music                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ predict                 : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ healthcar               : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ intellig                : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ manag                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ solut                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ in-stor                 : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ internet                : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ compani                 : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ social                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ better                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ web                     : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ tool                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ made                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ simpl                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ autom                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ real-tim                : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ track                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ media                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ secur                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ databas                 : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ saa                     : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ health                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ energi                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ content                 : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ sale                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ consum                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ ecommerc                : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ custom                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ enterpris               : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ local                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ advertis                : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ visual                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ system                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ interact                : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ generat                 : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ app                     : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ technolog               : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ stream                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ onlin                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ analysi                 : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ softwar                 : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ target                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ power                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ twitter                 : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ food                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ research                : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ network                 : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ dashboard               : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ tv                      : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ experi                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ cloud                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ real                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ payment                 : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ websit                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ search                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ site                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ game                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ servic                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ peopl                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ monet                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ provid                  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ save                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ perform                 : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ email                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ monitor                 : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ time                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ world                   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ call                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ host                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ team                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ free                    : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ locat                   : num  0 0 0 0 0 0 0 0 0 0 ...</code></pre>
+<p>First, let’s have a look at the following histogram.</p>
+<pre class="r"><code>qplot(colSums(dfm_desc), geom=&quot;histogram&quot;) </code></pre>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="data:image/png;base64,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" width="672" style="display: block; margin: auto;" /></p>
+<p>The majority of the terms are at the low-frequency end, which shouldn’t come as a surprise.</p>
+<pre class="r"><code>startups_desc%&gt;% 
+  gather(&quot;term&quot;,&quot;binary&quot;,2:88) %&gt;% 
+  group_by(term) %&gt;% 
+  summarise(companies = sum(binary == 1)) %&gt;% 
+  arrange(desc(companies))</code></pre>
+<pre><code>## # A tibble: 87 x 2
+##    term     companies
+##    &lt;chr&gt;        &lt;int&gt;
+##  1 analyt          57
+##  2 data            44
+##  3 social          39
+##  4 market          29
+##  5 media           26
+##  6 platform        25
+##  7 big             21
+##  8 custom          17
+##  9 mobil           16
+## 10 intellig        13
+## # ... with 77 more rows</code></pre>
+<p>Another way to show the above information is to display the number of failed and successful companies per term. We do that below.</p>
+<pre class="r"><code>startups_desc %&gt;% 
+  gather(&quot;term&quot;,&quot;binary&quot;,2:88) %&gt;% 
+  group_by(`dependent-company_status`, term) %&gt;% 
+  summarise(frequency = sum(binary)) %&gt;% 
+  spread(`dependent-company_status`, frequency) %&gt;% 
+  mutate(success_percent = SUCCESS/(SUCCESS+FAILED)*100) %&gt;% 
+  arrange(desc(success_percent),desc(SUCCESS)) %&gt;% 
+  as.data.frame()</code></pre>
+<pre><code>##         term FAILED SUCCESS success_percent
+## 1   intellig      0      13       100.00000
+## 2   real-tim      0       9       100.00000
+## 3        saa      0       7       100.00000
+## 4     system      0       6       100.00000
+## 5    insight      0       5       100.00000
+## 6     advanc      0       4       100.00000
+## 7        api      0       4       100.00000
+## 8        app      0       4       100.00000
+## 9      autom      0       4       100.00000
+## 10    consum      0       4       100.00000
+## 11 dashboard      0       4       100.00000
+## 12   in-stor      0       4       100.00000
+## 13     simpl      0       4       100.00000
+## 14    energi      0       3       100.00000
+## 15     engag      0       3       100.00000
+## 16    experi      0       3       100.00000
+## 17      food      0       3       100.00000
+## 18   generat      0       3       100.00000
+## 19     local      0       3       100.00000
+## 20     locat      0       3       100.00000
+## 21      made      0       3       100.00000
+## 22     monet      0       3       100.00000
+## 23     secur      0       3       100.00000
+## 24   twitter      0       3       100.00000
+## 25    analyt      4      55        93.22034
+## 26     solut      1      11        91.66667
+## 27       big      2      19        90.47619
+## 28      busi      1       8        88.88889
+## 29     manag      1       8        88.88889
+## 30   predict      1       8        88.88889
+## 31      data      5      39        88.63636
+## 32    custom      2      15        88.23529
+## 33   databas      1       6        85.71429
+## 34     video      1       6        85.71429
+## 35  platform      4      21        84.00000
+## 36       web      2      10        83.33333
+## 37   analysi      1       5        83.33333
+## 38  research      1       5        83.33333
+## 39     mobil      3      13        81.25000
+## 40    visual      1       4        80.00000
+## 41 technolog      2       7        77.77778
+## 42   content      1       3        75.00000
+## 43  interact      1       3        75.00000
+## 44      sale      1       3        75.00000
+## 45      save      1       3        75.00000
+## 46    stream      1       3        75.00000
+## 47     track      1       3        75.00000
+## 48     media      8      18        69.23077
+## 49    market      9      20        68.96552
+## 50   compani      2       4        66.66667
+## 51      tool      2       4        66.66667
+## 52    better      1       2        66.66667
+## 53 distribut      1       2        66.66667
+## 54 healthcar      1       2        66.66667
+## 55  internet      1       2        66.66667
+## 56   perform      1       2        66.66667
+## 57     power      1       2        66.66667
+## 58    provid      1       2        66.66667
+## 59        tv      1       2        66.66667
+## 60      real      2       3        60.00000
+## 61  advertis      3       4        57.14286
+## 62    social     17      22        56.41026
+## 63   softwar      4       4        50.00000
+## 64     peopl      3       3        50.00000
+## 65      time      3       3        50.00000
+## 66  ecommerc      2       2        50.00000
+## 67 enterpris      2       2        50.00000
+## 68   monitor      2       2        50.00000
+## 69    websit      2       2        50.00000
+## 70     cloud      4       3        42.85714
+## 71     onlin      7       5        41.66667
+## 72     engin      3       2        40.00000
+## 73     music      3       2        40.00000
+## 74    search      3       2        40.00000
+## 75      site      3       2        40.00000
+## 76    servic      7       4        36.36364
+## 77      free      2       1        33.33333
+## 78    health      2       1        33.33333
+## 79    target      2       1        33.33333
+## 80      team      2       1        33.33333
+## 81     world      2       1        33.33333
+## 82   network      6       2        25.00000
+## 83      call      3       1        25.00000
+## 84      game      3       1        25.00000
+## 85   payment      3       1        25.00000
+## 86     email      4       1        20.00000
+## 87      host      4       0         0.00000</code></pre>
+<p>For some reason, the <code>analyt</code> companies sum up to 59, while in the previous table, they were 57 companies. Where did the extra two companies come from? This is a mystery that is yet unsolved. Besides that, let’s observe the above table.</p>
+<p>For those terms with 100% success rates, we see terms like <code>intellig</code>, <code>real-tim</code>, <code>api</code> and <code>dashboard</code>, which are terms that are related to data science and business intelligence. This suggests that startups in such fields are likely to succeed. This is further confirmed by other terms with slightly smaller success rates like <code>analyt</code>, <code>big</code>, <code>data</code> and <code>predict</code>. Other terms that have promising success rates as well are <code>mobil</code> and <code>web</code>.</p>
+<p>For terms hovering around the 50% success mark, the strongest examples are <code>social</code>, <code>media</code> and <code>market</code>. We say ‘strongest’ due to the high number of companies involved, which increases our confidence in the observed success rate. For these terms, it seems that there are still lessons to be learned for startups that are considering providing services related to such terms. Other terms that seem to involve risky endeavors are <code>cloud</code> and <code>music</code>.</p>
+<p>Finally, we have a look at terms with very low success rates. It is no surprise that terms like <code>game</code> and <code>payment</code> are on this list. The gaming industry is very competitive and can be really tough to get into, and a payment-faciltating service that can outperform PayPal would not be easy to pull off. Other terms with low success rates are <code>email</code>, <code>host</code> and <code>call</code> which are all communication-related terms.</p>
+<p>Let’s do a few more visualizations before moving on with our analysis.</p>
+<pre class="r"><code># keep the terms with the highest number of companies
+high_freq_terms &lt;- 
+  startups_desc%&gt;% 
+  gather(&quot;term&quot;,&quot;binary&quot;,2:88) %&gt;% 
+  group_by(term) %&gt;% 
+  summarise(companies = sum(binary == 1)) %&gt;% 
+  arrange(desc(companies)) %&gt;%        # sort terms by number of companies
+  head(30) %&gt;% 
+  select(term) %&gt;% 
+  unlist()
+
+startups_desc %&gt;% 
+  gather(&quot;term&quot;,&quot;binary&quot;,2:88) %&gt;% 
+  group_by(`dependent-company_status`, term) %&gt;% 
+  summarise(frequency = sum(binary)) %&gt;%
+  filter(term %in% high_freq_terms) %&gt;% 
+  arrange(desc(frequency)) %&gt;% 
+  transform(term=reorder(term, frequency) ) %&gt;%
+  ggplot(aes(x = term, y = frequency, fill = `dependent.company_status`)) +
+  geom_bar(stat = 'identity') +
+  coord_flip()</code></pre>
+<p><img src="data:image/png;base64,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" width="672" style="display: block; margin: auto;" /></p>
+<p>In the figure above, we focus more on the terms with more companies as we have higher confidence in the patterns include within. That is, we excluded the terms that have a fewer number of companies than the <code>analysi</code> term.</p>
+<p>Based on the figure above, the terms <code>social</code>, <code>onlin</code>, <code>servic</code>, <code>softwar</code> and <code>network</code> may warrant further investigation due to their unfavorable success rates.</p>
+<p>Before moving on, there is one last thing that we will try. Let’s display a correlogram of the 10 most occurring terms and see if there are any interesting observations to be had.</p>
+<pre class="r"><code># correlation matrix of the top 10 occurring terms
+corr_data &lt;- cor(as.matrix(dfm_desc[,colSums(dfm_desc) %in% tail(sort(colSums(dfm_desc)),15)]))
+
+library(ggcorrplot)</code></pre>
+<pre><code>## Warning: package 'ggcorrplot' was built under R version 3.4.4</code></pre>
+<pre class="r"><code>ggcorrplot(corr_data,
+           hc.order = TRUE,     # order terms via heirarchical clustering
+           type = &quot;lower&quot;,
+           colors = c(&quot;tomato2&quot;, &quot;white&quot;, &quot;springgreen3&quot;))</code></pre>
+<p><img src="data:image/png;base64,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" width="672" /></p>
+<p>The two strongest correlating pairs are <code>big+data</code> and <code>social+media</code>, followed by other pairs such as <code>analyt+predict</code>, <code>predict+solut</code>, <code>intellig+solut</code>, <code>custom+intellig</code> and <code>market+technolog</code> among others. This correlogram is interesting for uncovering some prevalent trends among startups (e.g. social media and custom intelligence-related solutions). Note that the terms in the figure (which form the labels of the x and y axes) are the most occurring terms in the dataset, meaning that the computed correlations are significant and meaningful.</p>
+<p>We end our analysis of the <code>short_description_of_company_profile</code> variable here and move on.</p>
 </div>
 <div id="focus-functions-of-company" class="section level4">
 <h4>Focus functions of company</h4>
