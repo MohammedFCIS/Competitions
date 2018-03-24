@@ -994,6 +994,15 @@ First we have to impute the missing values
 #            xlab("")
 ```
 
+# Checking Numeric Variables
+
+# a function to calculate any outlier in Numeric features
+```{r}
+Count_Outliers <- 0
+is_outlier <- function(x) {
+  return(x < quantile(x, 0.25, na.rm= TRUE) - 1.5 * IQR(x, na.rm= TRUE) | x > quantile(x, 0.75, na.rm= TRUE) + 1.5 * IQR(x, na.rm= TRUE))
+  } 
+```
 # Exploratory Data Analysis
 
 # Feature Engineering
