@@ -1,6 +1,6 @@
 ---
 title: "Startups Business Analytics"
-author: "Mohammed Ali, Ali Ezzat"
+author: "Mohammed Ali, Ali Ezzat, Sami Emad" 
 date: "February 17, 2018"
 output:
     html_document:
