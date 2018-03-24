@@ -1003,6 +1003,55 @@ is_outlier <- function(x) {
   return(x < quantile(x, 0.25, na.rm= TRUE) - 1.5 * IQR(x, na.rm= TRUE) | x > quantile(x, 0.75, na.rm= TRUE) + 1.5 * IQR(x, na.rm= TRUE))
   } 
 ```
+
+## summary of `year_of_founding` variable 
+```{r Company year founding}
+summary(startups$year_of_founding)
+```
+
+## list of the values, and their count
+```{r}
+count(startups,year_of_founding)
+```
+
+## percentage of NA value in year_of_founding feature
+```{r}
+NA_percnt = (count(startups$year_of_founding=="NA"))$freq[2]/nrow(startups)*100
+```
+ We have ablout `NA_percnt` missing value in `year_of_founding` feature.
+## We will draw a histogarm of this feature to know its type of distribution which will help us
+## in figuring out the best method to deal with NA values. 
+```{r Bar_chart} 
+ggplot(startups, aes(x=as.factor(year_of_founding) , fill=startups$`dependent-company_status`)) + 
+  geom_bar(position = "dodge")   +
+  labs(title = "Year of Company Founding\n", x = "Year of Founding", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14, angle=90), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+We have found that, most of the successfull companies were founder on 2009 and later, and it's
+most likely the compnay failed before that year. In addition, the NA values shows that the companies were probably successfull which indicates they were founded on the same periods its counterparts were.
+
+## figuiring out the outlier and labeld them
+```{r checking outliers using boxpolt }
+startups %>%  
+  mutate(outlier = ifelse(is_outlier(year_of_founding), year_of_founding, as.numeric(NA))) %>%
+  ggplot(., aes(x = 1,y = year_of_founding)) +
+  geom_boxplot(outlier.color = "red") +
+  geom_text(aes(label = outlier), na.rm = TRUE, hjust = -0.3, color="red")
+```
+
+## counting outlier and finding their percentage
+```{r}
+outlier = ifelse(is_outlier(startups$year_of_founding), startups$year_of_founding, as.numeric(NA))
+outlier_count <- count(outlier!="NA")$freq[1]
+outlier_percnt <-(count(outlier!="NA")$freq[1]/nrow(startups))*100
+```
+In this `year_of_founding`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
+
+
 # Exploratory Data Analysis
 
 # Feature Engineering
