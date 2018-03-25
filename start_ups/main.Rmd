@@ -1733,7 +1733,7 @@ count(startups$'number_of_recognitions_for_founders_and_co-founders')
 (count(startups$'number_of_recognitions_for_founders_and_co-founders'=="NA")$freq[2]/nrow(startups))*100
 ```
 
-around 17% of the feature's values are missing
+around 17% of the feature's values are missing.
 
 # Exploratory Data Analysis
 
