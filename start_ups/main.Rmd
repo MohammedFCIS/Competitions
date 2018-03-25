@@ -1721,19 +1721,19 @@ Multiple values with  each recoreded, except only one value which probably
 summary(startups$'number_of_recognitions_for_founders_and_co-founders')
 ```
 
-## list of the values, and their count
+### list of the values, and their count
 
 ```{r}
 count(startups$'number_of_recognitions_for_founders_and_co-founders')
 ```
 
-## percentage of NA value in internet_activity_score
+### percentage of NA value in internet_activity_score
 
 ```{r}
 (count(startups$'number_of_recognitions_for_founders_and_co-founders'=="NA")$freq[2]/nrow(startups))*100
 ```
 
-around 17% of the feature's values are missing
+We have around 17% of the feature's values are missing
 
 # Exploratory Data Analysis
 
