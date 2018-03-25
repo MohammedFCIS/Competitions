@@ -746,7 +746,7 @@ head(startups$short_description_of_company_profile, 10)
 
 Let's carry on and generate the DTM matrix.
 
-```{r }
+```{r}
 # create the corpus object from the short_description_of_company_profile column
 mycorpus <- corpus(startups$short_description_of_company_profile)
 
