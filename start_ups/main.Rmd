@@ -997,3 +997,758 @@ First we have to impute the missing values
 #            xlab("")
 ```
 
+# Checking Numeric Variables
+
+# a function to calculate any outlier in Numeric features
+```{r}
+Count_Outliers <- 0
+is_outlier <- function(x) {
+  return(x < quantile(x, 0.25, na.rm= TRUE) - 1.5 * IQR(x, na.rm= TRUE) | x > quantile(x, 0.75, na.rm= TRUE) + 1.5 * IQR(x, na.rm= TRUE))
+  } 
+```
+
+# summary of `year_of_founding` variable 
+```{r Company year founding}
+summary(startups$year_of_founding)
+```
+
+## list of the values, and their count
+```{r}
+count(startups,year_of_founding)
+```
+
+## percentage of NA value in year_of_founding feature
+```{r}
+NA_percnt = (count(startups$year_of_founding=="NA"))$freq[2]/nrow(startups)*100
+```
+ We have ablout `NA_percnt` missing value in `year_of_founding` feature.
+## We will draw a histogarm of this feature to know its type of distribution which will help us
+## in figuring out the best method to deal with NA values. 
+```{r Bar_chart} 
+ggplot(startups, aes(x=as.factor(year_of_founding) , fill=startups$`dependent-company_status`)) + 
+  geom_bar(position = "dodge")   +
+  labs(title = "Year of Company Founding\n", x = "Year of Founding", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14, angle=90), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+We have found that, most of the successfull companies were founder on 2009 and later, and it's
+most likely the compnay failed before that year. In addition, the NA values shows that the companies were probably successfull which indicates they were founded on the same periods its counterparts were.
+
+## figuiring out the outlier and labeld them
+```{r checking outliers using boxpolt, warning=FALSE}
+startups %>%  
+  mutate(outlier = ifelse(is_outlier(year_of_founding), year_of_founding, as.numeric(NA))) %>%
+  ggplot(., aes(x = 1,y = year_of_founding)) +
+  geom_boxplot(outlier.color = "red") +
+  geom_text(aes(label = outlier), na.rm = TRUE, hjust = -0.3, color="red")
+```
+
+## counting outlier and finding their percentage
+```{r}
+outlier = ifelse(is_outlier(startups$year_of_founding), startups$year_of_founding, as.numeric(NA))
+outlier_count <- count(outlier!="NA")$freq[1]
+outlier_percnt <- count(outlier!="NA")$freq[1]/nrow(startups)*100
+```
+In this `year_of_founding`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
+
+# Summary of `age_of_company_in_years` feature
+```{r Summary}
+summary(startups$age_of_company_in_years)
+```
+## list of the values, and their count
+```{r List of the values}
+count(startups,age_of_company_in_years)
+```
+## percentage of NA value in year_of_founding
+```{r Percentage claculation for NA values}
+(count(startups$age_of_company_in_years=="NA"))$freq[2]/nrow(startups)*100
+```
+# find the missing ones between both features
+```{r}
+md.pattern(startups[,3:4])
+```
+ This shows that both are related literally and NA values are not missing normally
+
+## drwaing a histogarm of  the feature to know its type of distribution which will help us
+## figuring out the best method to deal with NA vales 
+```{r bar_chart grapth} 
+ggplot(startups, aes(x=as.factor(age_of_company_in_years) , fill=startups$`dependent-company_status`)) + 
+   geom_bar(position = "dodge")   +
+   labs(title = "Company Age in Years\n", x = "Company Age in Years", y = "Count", fill= "Success|Failed\n ") +
+   scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+   theme_bw() +
+   theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+         axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+         plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+ 
+## figuiring out the outlier and labeld them
+```{r feature outliers, warning=FALSE} 
+ startups %>%  
+   mutate(outlier = ifelse(is_outlier(age_of_company_in_years), age_of_company_in_years, as.numeric(NA))) %>%
+   ggplot(., aes(x = 1,y = age_of_company_in_years)) +
+   geom_boxplot(outlier.color = "red") +
+   geom_text(aes(label = outlier), na.rm = TRUE, hjust = -0.3, color="red")
+```
+## more visulization approve
+```{r }
+pairs.panels(startups[,3:4], gap=0, bg= c("red", "green")[startups$`dependent-company_status`], pch= 21)
+```
+ The plot shows that there is a CLEAR negative correlation between the two predictors, and also having the same distribution; therefore we need to deal with NA carefully to make it
+normally distributed,and at the end we will be using ONLY one feature of these.
+This function(pais.panel) help us to make further investigation between the relations of some related features.
+
+## counting outlier and finding their percentage
+```{r}
+outlier = ifelse(is_outlier(startups$age_of_company_in_years), startups$age_of_company_in_years, as.numeric(NA))
+outlier_count <- count(outlier!="NA")$freq[1]
+outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+```
+In this `age_of_company_in_years`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
+
+# summary internet_activity_score
+```{r Feature Summary }
+summary(startups$internet_activity_score)
+```
+## list of the values, and their count
+```{r}
+count(startups, internet_activity_score)
+```
+## percentage of NA value in internet_activity_score
+```{r}
+(count(startups, internet_activity_score=="NA"))$freq[2]/nrow(startups)*100
+```
+## couning NA based on Company state
+```{r }
+count(startups[is.na(startups$internet_activity_score), 2])
+```  
+We found that 2/3 of the NA of internet_activity_score is failed, and 1/3 are success
+We can deal with NA with two medians, one for failed and other for success
+
+## Visualiziobg 
+```{r, warning=FALSE}
+ggplot(startups, aes(x=internet_activity_score, fill=startups$`dependent-company_status`)) + 
+  geom_density(alpha=0.4 ) +
+  labs(title = "internet_activity_score\n", x = "internet_activity_score", y = "Percentage", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+We need to figure out how a company has a negative Internet Activity Score !!!
+
+## figuiring out the outlier and labeld them
+```{r Feature Outliers,warning=FALSE}
+startups %>%  
+  mutate(outlier = ifelse(is_outlier(internet_activity_score), internet_activity_score, as.numeric(NA))) %>%
+  ggplot(., aes(x = 1,y = internet_activity_score)) +
+  geom_boxplot(outlier.color = "red") +
+  geom_text(aes(label = outlier), na.rm = TRUE, hjust = -0.3, color="red")
+```
+## counting outlier and finding their percentage
+```{r}
+outlier = ifelse(is_outlier(startups$internet_activity_score), startups$internet_activity_score, as.numeric(NA))
+outlier_count <- count(outlier!="NA")$freq[1]
+outlier_percnt <- count(outlier!="NA")$freq[1]/nrow(startups)*100
+```
+In this `internet_activity_score`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
+
+# Summary of employee_count feature
+```{r}
+summary(startups$employee_count)
+```
+## list of the values, and their count
+```{r}
+count(startups$employee_count)
+```
+## percentage of NA value in internet_activity_score
+```{r}
+(count(startups$employee_count=="NA"))$freq[2]/nrow(startups)*100
+```
+ 
+approximately 36% of the data is NA, propably its good if we can remove this feature.
+
+# Visual test
+```{r , warning=FALSE}
+ggplot(startups, aes(x=employee_count , fill=startups$`dependent-company_status`)) + 
+  geom_density(alpha= 0.2,aes(y=..count..))  +
+  labs(title = "employee_count\n", x = "employee_count", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+No clear distinguis beween the status of company based on employee_count
+
+# summary of last_funding_amount feature
+```{r}
+summary(startups$last_funding_amount)
+```
+## list of the values, and their count
+```{r}
+count(startups$last_funding_amount)
+```
+# percentage of NA value in internet_activity_score
+```{r}
+count(startups$last_funding_amount=="NA")$freq[2]/nrow(startups)*100
+```
+Once more, about 34% of the data is misssing
+
+## drawing a histogram of  the feature to know its type of distribution which will help us
+## in figuring out the best method to deal with NA vales 
+```{r, warning=FALSE}
+ggplot(startups, aes(x=last_funding_amount, fill=startups$`dependent-company_status`)) + 
+  geom_density(alpha= 0.2,aes(y=..count..))    +
+  labs(title = "last_funding_amount\n", x = "last_funding_amount", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+
+NO clear findout we can have. 
+## Figuring out the outlier and labeld them
+```{r, warning=FALSE}
+startups %>%  
+  mutate(outlier = ifelse(is_outlier(last_funding_amount), last_funding_amount, as.numeric(NA))) %>%
+  ggplot(., aes(x = 1,y = last_funding_amount)) +
+  geom_boxplot(outlier.color = "red") +
+  geom_text(aes(label = outlier), na.rm = TRUE, hjust = -0.3, color="red")
+```
+## counting outlier and finding their percentage
+```{r}
+outlier = ifelse(is_outlier(startups$last_funding_amount), startups$last_funding_amount, as.numeric(NA))
+outlier_count<- count(outlier!="NA")$freq[1]
+outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+```
+We have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
+
+# summary of number_of_investors_in_seed feature 
+```{r}
+summary(startups$number_of_investors_in_seed)
+```
+## list of the values, and their count
+```{r}
+count(startups$number_of_investors_in_seed)
+```
+## percentage of NA value in internet_activity_score
+```{r}
+(count(startups$number_of_investors_in_seed=="NA")$freq[2]/nrow(startups))*100
+```   
+ 10% of the data is missing
+
+## drawing a histogram of  the feature to know its type of distribution which will help us
+## in figuring out the best method to deal with NA vales 
+```{r}
+ggplot(startups, aes(x=as.factor(number_of_investors_in_seed) , fill=startups$`dependent-company_status`)) + 
+  geom_bar(aes(y = ..count../sum(..count..)))   +   scale_y_continuous(name = "%", labels=scales::percent) +
+  labs(title = "Number Of Investors in Seed\n", x = "Investors #", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+
+The bar shows that the most succee and failed companies are located in the first section, and the number of seed investor less than 4, and also the NA data for this features seems to be failed , overwhelmingly we can replace the NA with failed company status with median, and the success one with the median of success compnaies.
+
+## Figuring out the outlier and labeld them
+```{r, warning=FALSE}
+startups %>%  
+  mutate(outlier = ifelse(is_outlier(number_of_investors_in_seed), number_of_investors_in_seed, as.numeric(NA))) %>%
+  ggplot(., aes(x = 1,y = number_of_investors_in_seed)) +
+  geom_boxplot(outlier.color = "red") +
+  geom_text(aes(label = outlier), na.rm = TRUE, hjust = -0.3, color="red")
+```
+## counting outlier and finding their percentage
+```{r}
+outlier = ifelse(is_outlier(startups$number_of_investors_in_seed), startups$number_of_investors_in_seed, as.numeric(NA))
+outlier_count<- count(outlier!="NA")$freq[1]
+outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+```
+
+In this `number_of_investors_in_seed`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
+
+## frequency of the company sattus when NA applied
+```{r}
+count(startups[is.na(startups$number_of_investors_in_seed), 2])
+```
+
+# Summary of the number_of_investors_in_angel_and_or_vc feature
+```{r}
+summary(startups$number_of_investors_in_angel_and_or_vc)
+```
+## list of the values, and their count
+```{r}
+count(startups$number_of_investors_in_angel_and_or_vc)
+```
+
+## percentage of NA value in internet_activity_score
+```{r}
+(count(startups$number_of_investors_in_angel_and_or_vc=="NA")$freq[2]/nrow(startups))*100
+``` 
+
+## drawing a histogram of  the feature to know its type of distribution which will help us
+## in figuring out the best method to deal with NA vales 
+
+```{r}
+ggplot(startups, aes(x=as.factor(number_of_investors_in_angel_and_or_vc) , fill=startups$`dependent-company_status`)) + 
+  geom_bar(aes(y = ..count../sum(..count..))) + scale_y_continuous( name = "%", labels=scales::percent) +
+  labs(title = "Number of Investors in Angel and/or Vc\n", x = "Investors # Angel/VC \n",  fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+   
+The bar shows that the most succee and failed companies are located in the first section, 
+`number_of_investors_in_angel_and_or_vc`, and also the NA data for this features seems to be failed overwhelmingly, we can replace the NA with failed company status with median, and the success one with the median of success compnaies. In other word, we can convert this feature to categorical variable; 0 or others
+
+## Figuring out the outlier and labeld them
+```{r}
+startups %>%  
+  mutate(outlier = ifelse(is_outlier(number_of_investors_in_angel_and_or_vc), number_of_investors_in_angel_and_or_vc, as.numeric(NA))) %>%
+  ggplot(., aes(x = 1,y = number_of_investors_in_angel_and_or_vc)) +
+  geom_boxplot(outlier.color = "red") +
+  geom_text(aes(label = outlier), na.rm = TRUE, hjust = -0.3, color="red")
+```
+
+It appears only, the 0 value is identical while other aren't, and this clear when we check 
+the count function to know each value's frequency
+
+## counting outlier and finding their percentage
+```{r,warning=FALSE}
+outlier = ifelse(is_outlier(startups$number_of_investors_in_angel_and_or_vc), startups$number_of_investors_in_angel_and_or_vc, as.numeric(NA))
+outlier_count<- count(outlier!="NA")$freq[1]
+outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+```
+In this `number_of_investors_in_angel_and_or_vc`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
+
+## frequency of the company sattus
+```{r}
+count(startups[is.na(startups$number_of_investors_in_angel_and_or_vc), 2])
+```  
+
+Only 3 companies success, and almost 10% failed with NA value, it looks like there is no clear significant for this feature, as it didn't clearly  affect the company status, this could be clear if we repalce the missing value with 0 value  then, balance might take place
+we will do other test withis feature and number_of_investors_in_seed
+
+## check missing values between 
+```{r}
+md.pattern(startups[,17:18])
+```
+
+## more visulization approve
+```{r}
+pairs.panels(startups[,17:18], gap=0, bg= c("red", "green")[startups$`dependent-company_status`], pch= 21)
+```
+
+Weak correlation between them, even if they share some properities.
+
+## Summary of number_of_co-founders feature 
+```{r}
+summary(startups$'number_of_co-founders')
+```
+
+## list of the values, and their count
+```{r}
+count(startups$'number_of_co-founders')
+```
+
+## percentage of NA value in internet_activity_score
+```{r}
+(count(startups$'number_of_co-founders'=="NA")$freq[2]/nrow(startups))*100
+```  
+  
+No missing value for this feature, this might indicate to the significant role of this feature.
+
+## drawing a histogram of  the feature to know its type of distribution which will help us
+## in figuring out the best method to deal with NA vales 
+```{r}
+ggplot(startups, aes(x=as.factor(`number_of_co-founders`), fill=startups$'dependent-company_status')) + 
+  geom_bar(aes(y = ..count../sum(..count..)))   +   scale_y_continuous(name = "%", labels=scales::percent) +
+  labs(title = "Companies' Co-founder # ", x = "Co-founder #", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+
+It's clearly that, this feature has normal distribution
+
+## density geom
+```{r}
+ggplot(startups, aes(x=`number_of_co-founders`)) + 
+  geom_density()
+```
+
+## Figuring out the outlier and labeld them
+```{r}
+startups %>%  
+  mutate(outlier = ifelse(is_outlier(`number_of_co-founders`), `number_of_co-founders`, as.numeric(NA))) %>%
+  ggplot(., aes(x = 1,y = `number_of_co-founders`)) +
+  geom_boxplot(outlier.color = "red") +
+  geom_text(aes(label = outlier), na.rm = TRUE, hjust = -0.3, color="red")
+```   
+
+Values above 4 considered outlire
+
+## counting outlier and finding their percentage
+```{r}
+outlier = ifelse(is_outlier(startups$`number_of_co-founders`), startups$`number_of_co-founders`, as.numeric(NA))
+outlier_count<- count(outlier!="NA")$freq[1]
+outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+```
+In this `number_of_co-founders`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
+
+# Summary of number_of_of_advisors feature
+```{r}
+summary(startups$number_of_of_advisors)
+```
+
+## list of the values, and their count
+```{r}
+count(startups$number_of_of_advisors)
+```
+
+## percentage of NA value in internet_activity_score
+```{r}
+(count(startups$number_of_of_advisors=="NA")$freq[2]/nrow(startups))*100
+```
+ 
+There is no NA value in this features.
+
+## drawing a histogram of  the feature to know its type of distribution which will help us
+## in figuring out the best method to deal with NA vales 
+```{r}
+ggplot(startups, aes(x=as.factor(number_of_of_advisors) , fill=startups$`dependent-company_status`)) + 
+  geom_bar(aes(y = ..count../sum(..count..)))   +   scale_y_continuous(name = "%", labels=scales::percent) +
+  labs(title = "Number of Advisors per company\n", x = "Advisors #", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+
+The graph shows that, around 62% of the companies don't have advisors, and the more company has advisors, the more likely this compnay will have start-up success case, and the grapg shows also that this feature has high-right skewed distribution, and this could be due to the outliers.
+
+## Figuring out the outlier and labeld them
+```{r}
+startups %>%  
+  mutate(outlier = ifelse(is_outlier(number_of_of_advisors), number_of_of_advisors, as.numeric(NA))) %>%
+  ggplot(., aes(x = 1,y = number_of_of_advisors)) +
+  geom_boxplot(outlier.color = "red") +
+  geom_text(aes(label = outlier), na.rm = TRUE, hjust = -0.3, color="red")
+```
+
+Looks like, any value avove of 2 advisors would be considered as outlier, and as we figure out 
+when using summary function that 62% of the compnay dont have advisors.
+
+## counting outlier and finding their percentage
+```{r}
+outlier = ifelse(is_outlier(startups$number_of_of_advisors), startups$number_of_of_advisors, as.numeric(NA))
+outlier_count<- count(outlier!="NA")$freq[1]
+outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+```
+
+In this `number_of_of_advisors`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
+ 
+# Summary of team_size_senior_leadership feature 
+
+```{r}
+summary(startups$team_size_senior_leadership)
+```
+
+## list of the values, and their count
+
+```{r}
+count(startups$team_size_senior_leadership)
+```
+
+## percentage of NA value in internet_activity_score
+```{r}
+(count(startups$team_size_senior_leadership=="NA")$freq[2]/nrow(startups))*100
+```
+  
+No NA value for this feature.
+
+## drawing a histogram of  the feature to know its type of distribution which will help us
+## in figuring out the best method to deal with NA vales 
+```{r}
+ggplot(startups, aes(x=as.factor(team_size_senior_leadership) , fill=startups$`dependent-company_status`)) + 
+  geom_bar(aes(y = ..count../sum(..count..)))   +   scale_y_continuous(name = "%", labels=scales::percent) +
+  labs(title = "Number of Senior Leadership\n", x = "Senior Leadership #", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+
+This feature refers to that, the more senior leadership members a compnay has, the more likely the compnay would be success. Moreover, the feature look it has a right-skewed distribution.
+
+## Figuring out the outlier and labeld them
+```{r}
+startups %>%  
+  mutate(outlier = ifelse(is_outlier(team_size_senior_leadership), team_size_senior_leadership, as.numeric(NA))) %>%
+  ggplot(., aes(x = 1,y = team_size_senior_leadership)) +
+  geom_boxplot(outlier.color = "red") +
+  geom_text(aes(label = outlier), na.rm = TRUE, hjust = -0.3, color="red")
+```
+  
+Looke that an outliervalue could be calculatedas above of 9 senior leadership.
+
+## counting outlier and finding their percentage
+```{r}
+outlier = ifelse(is_outlier(startups$team_size_senior_leadership), startups$team_size_senior_leadership, as.numeric(NA))
+outlier_count<- count(outlier!="NA")$freq[1]
+outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+```
+
+In this `age_of_company_in_years`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
+
+# Summary of team_size_all_employees feature
+
+```{r}
+summary(startups$team_size_all_employees)
+```
+
+## list of the values, and their count
+
+```{r}
+count(startups$team_size_all_employees)
+```
+
+## percentage of NA value in internet_activity_score
+
+```{r}
+(count(startups$team_size_all_employees=="NA")$freq[2]/nrow(startups))*100
+```
+It looks like there is a 14.5% a NA value, which need to be addressed and replaced by an approp
+appropriate value in order to keep the feature shape normally distributed.
+
+
+## drawing a histogram of  the feature to know its type of distribution which will help us
+## in figuring out the best method to deal with NA vales 
+```{r}
+ggplot(startups, aes(x=team_size_all_employees , fill=startups$`dependent-company_status`)) + 
+  geom_histogram(bins = 10 , aes(y = ..count../sum(..count..)))   +   scale_y_continuous(name = "%", labels=scales::percent) +
+  labs(title = "Number of Employees\n", x = "Employees #", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+
+The graph show that there is a high-right skewed distributoin.
+
+```{r}
+ggplot(startups, aes(x=team_size_all_employees)) +
+  geom_density( )
+```
+
+## Figuring out the outlier and labeld them
+
+```{r}
+startups %>%  
+  mutate(outlier = ifelse(is_outlier(team_size_all_employees), team_size_all_employees, as.numeric(NA))) %>%
+  ggplot(., aes(x = 1,y = team_size_all_employees)) +
+  geom_boxplot(outlier.color = "red") +
+  geom_text(aes(label = outlier), na.rm = TRUE, hjust = -0.3, color="red")
+```
+
+## counting outlier and finding their percentage
+```{r}
+outlier = ifelse(is_outlier(startups$team_size_all_employees), startups$team_size_all_employees, as.numeric(NA))
+outlier_count<- count(outlier!="NA")$freq[1]
+outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+```
+
+In this `team_size_all_employees`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
+
+# Summary of presence_of_a_top_angel_or_venture_fund_in_previous_round_of_investment feature
+
+```{r}
+summary(startups$presence_of_a_top_angel_or_venture_fund_in_previous_round_of_investment)
+```
+
+## list of the values, and their count
+```{r}
+count(startups$presence_of_a_top_angel_or_venture_fund_in_previous_round_of_investment)
+```
+
+## drawing a histogram of  the feature to know its type of distribution which will help us
+## in figuring out the best method to deal with NA vales 
+```{r}
+ggplot(startups, aes(x=presence_of_a_top_angel_or_venture_fund_in_previous_round_of_investment , fill=startups$`dependent-company_status`)) + 
+  geom_bar(aes(y = ..count../sum(..count..)))   +   scale_y_continuous(name = "%", labels=scales::percent) +
+  labs(title = "Presence ", x = "YES/NO", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+   
+We can impement NA value in Decision tree algorith, asit has a big percent.
+ 
+## frequency of the company sattus
+```{r}
+count(startups[is.na(startups$presence_of_a_top_angel_or_venture_fund_in_previous_round_of_investment), 2])
+```
+
+This statement shows the company start-up status when thhis feature has a NA value, lookd like
+there is clear pattern, therefore we can use this value in implementing our algorithm.
+
+# Summary of number_of_of_repeat_investors feature
+
+```{r}
+summary(startups$number_of_of_repeat_investors)
+```
+
+## list of the values, and their count
+
+```{r}
+count(startups$number_of_of_repeat_investors)
+```
+
+## percentage of NA value in internet_activity_score
+
+```{r}
+(count(startups$number_of_of_repeat_investors=="NA")$freq[2]/nrow(startups))*100
+```
+
+There is around 9% NA of this feature.
+
+## drawing a histogram of  the feature to know its type of distribution which will help us
+## in figuring out the best method to deal with NA vales 
+```{r}
+ggplot(startups, aes(x=as.factor(number_of_of_repeat_investors) , fill=startups$`dependent-company_status`)) + 
+  geom_bar(aes(y = ..count../sum(..count..)))   +   scale_y_continuous(name = "%", labels=scales::percent) +
+  labs(title = "Number of Repeat Investors \n", x = "Investors #", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+
+The graph shows that, around 63% of the companies don't have repated invstors, and the NA is failed startup companies, which will help us in determining the most appropriate value to replace the NA with, which is 0 in this case. We can convert this feature to categorical type
+
+## Figuring out the outlier and labeld them
+```{r}
+startups %>%  
+  mutate(outlier = ifelse(is_outlier(number_of_of_repeat_investors), number_of_of_repeat_investors, as.numeric(NA))) %>%
+  ggplot(., aes(x = 1,y = 'number_of_of_repeat_investors')) +
+  geom_boxplot(outlier.color = "red") +
+  geom_text(aes(label = outlier), na.rm = TRUE, hjust = -0.3, color="red")
+```
+
+## counting outlier and finding their percentage
+```{r}
+outlier = ifelse(is_outlier(startups$number_of_of_repeat_investors), startups$number_of_of_repeat_investors, as.numeric(NA))
+outlier_count<- count(outlier!="NA")$freq[1]
+outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+```
+
+In this `number_of_of_repeat_investors`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
+
+# Summary of number_of__sales_support_material feature  
+
+```{r}
+summary(startups$number_of__sales_support_material)
+```
+## list of the values, and their count
+
+```{r}
+count(startups$number_of__sales_support_material)
+```  
+
+This feature has Nothing value as one of its factors, and this needs to be treated as what value could rather than low, medium and high.
+
+## percentage of NA value in internet_activity_score
+
+```{r}
+(count(startups$number_of__sales_support_material=="NA")$freq[2]/nrow(startups))*100
+```  
+
+Almost 10% is NA
+
+## drawing a histogram of  the feature to know its type of distribution which will help us
+## in figuring out the best method to deal with NA vales 
+```{r}
+ggplot(startups, aes(x=number_of__sales_support_material , fill=startups$`dependent-company_status`)) + 
+  geom_bar(aes(y = ..count../sum(..count..)))   +   scale_y_continuous(name = "%", labels=scales::percent) +
+  labs(title = "Number of Sales Support Material\n", x = "Sales Support # ", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+
+The graph shows that this feature has approximately normal distribution, and most of the NA values have failed start-up company status.
+
+# Summary of years_of_education feature
+
+```{r}
+summary(startups$years_of_education)
+```
+
+## list of the values, and their count
+
+```{r}
+count(startups$years_of_education)
+```
+
+## percentage of NA value in internet_activity_score
+
+```{r}
+(count(startups$years_of_education=="NA")$freq[2]/nrow(startups))*100
+```
+
+Multiple values with  each recoreded, except only one value which probably 
+
+# Summary of number_of_recognitions_for_founders_and_co-founders feature 
+
+```{r}
+summary(startups$'number_of_recognitions_for_founders_and_co-founders')
+```
+
+### list of the values, and their count
+
+```{r}
+count(startups$'number_of_recognitions_for_founders_and_co-founders')
+```
+
+### percentage of NA value in internet_activity_score
+
+```{r}
+(count(startups$'number_of_recognitions_for_founders_and_co-founders'=="NA")$freq[2]/nrow(startups))*100
+```
+
+We have around 17% of the feature's values are missing
+
+# Exploratory Data Analysis
+
+# Feature Engineering
+
+# Pre-Modeling Processing
+## Missing Values
+
+## More Exploration
+
+## Hypothesis Testing
+
+## Predictor Selection
+
+
