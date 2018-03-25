@@ -13,6 +13,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
 library(quanteda)
+library(psych)
+library(mice) 
+library(VIM)
 ```
 
 # Objective
@@ -1047,7 +1050,7 @@ startups %>%
 ```{r}
 outlier = ifelse(is_outlier(startups$year_of_founding), startups$year_of_founding, as.numeric(NA))
 outlier_count <- count(outlier!="NA")$freq[1]
-outlier_percnt <-(count(outlier!="NA")$freq[1]/nrow(startups))*100
+outlier_percnt <- count(outlier!="NA")$freq[1]/nrow(startups)*100
 ```
 In this `year_of_founding`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
 
@@ -1057,7 +1060,7 @@ summary(startups$age_of_company_in_years)
 ```
 ## list of the values, and their count
 ```{r List of the values}
-count(startups$age_of_company_in_years)
+count(startups,age_of_company_in_years)
 ```
 ## percentage of NA value in year_of_founding
 ```{r Percentage claculation for NA values}
@@ -1094,8 +1097,8 @@ ggplot(startups, aes(x=as.factor(age_of_company_in_years) , fill=startups$`depen
 ```{r }
 pairs.panels(startups[,3:4], gap=0, bg= c("red", "green")[startups$`dependent-company_status`], pch= 21)
 ```
- The plot shows that there is a CLEAR positive correlation between the two predictors, and also having the same distribution; therefore we need to deal with NA carefully to make it
-normally distributed,and at the ned we will be using ONLY one feature ofthese.
+ The plot shows that there is a CLEAR negative correlation between the two predictors, and also having the same distribution; therefore we need to deal with NA carefully to make it
+normally distributed,and at the end we will be using ONLY one feature of these.
 This function(pais.panel) help us to make further investigation between the relations of some related features.
 
 ## counting outlier and finding their percentage
@@ -1112,11 +1115,11 @@ summary(startups$internet_activity_score)
 ```
 ## list of the values, and their count
 ```{r}
-count(startups$internet_activity_score)
+count(startups, internet_activity_score)
 ```
 ## percentage of NA value in internet_activity_score
 ```{r}
-(count(startups$internet_activity_score=="NA"))$freq[2]/nrow(startups)*100
+(count(startups, internet_activity_score=="NA"))$freq[2]/nrow(startups)*100
 ```
 ## couning NA based on Company state
 ```{r }
