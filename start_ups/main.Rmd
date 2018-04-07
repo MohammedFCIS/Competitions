@@ -959,18 +959,6 @@ head(startups$investors, 10)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 ### Time Series Variables
 This category contains the following two fields `Est. Founding Date` and `Last Funding Date`, so let us begin.
 #### Missing Values
@@ -1014,13 +1002,15 @@ summary(startups$year_of_founding)
 
 ## list of the values, and their count
 ```{r}
-count(startups,year_of_founding)
+count(startups, year_of_founding)
 ```
 
 ## percentage of NA value in year_of_founding feature
 ```{r}
-NA_percnt = (count(startups$year_of_founding=="NA"))$freq[2]/nrow(startups)*100
+NA_percnt =as.numeric( (count(startups, year_of_founding=="NA"))[2,2] /nrow(startups)*100)
+NA_percnt
 ```
+
  We have ablout `NA_percnt` missing value in `year_of_founding` feature.
 ## We will draw a histogarm of this feature to know its type of distribution which will help us
 ## in figuring out the best method to deal with NA values. 
@@ -1049,8 +1039,8 @@ startups %>%
 ## counting outlier and finding their percentage
 ```{r}
 outlier = ifelse(is_outlier(startups$year_of_founding), startups$year_of_founding, as.numeric(NA))
-outlier_count <- count(outlier!="NA")$freq[1]
-outlier_percnt <- count(outlier!="NA")$freq[1]/nrow(startups)*100
+outlier_count <- sum(!is.na(outlier))
+outlier_percent <- (outlier_count/nrow(startups))*100
 ```
 In this `year_of_founding`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
 
@@ -1064,7 +1054,7 @@ count(startups,age_of_company_in_years)
 ```
 ## percentage of NA value in year_of_founding
 ```{r Percentage claculation for NA values}
-(count(startups$age_of_company_in_years=="NA"))$freq[2]/nrow(startups)*100
+as.numeric((count(startups, age_of_company_in_years=="NA"))[2,2]/nrow(startups)*100)
 ```
 # find the missing ones between both features
 ```{r}
@@ -1104,8 +1094,8 @@ This function(pais.panel) help us to make further investigation between the rela
 ## counting outlier and finding their percentage
 ```{r}
 outlier = ifelse(is_outlier(startups$age_of_company_in_years), startups$age_of_company_in_years, as.numeric(NA))
-outlier_count <- count(outlier!="NA")$freq[1]
-outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+outlier_count <- sum(!is.na(outlier))
+outlier_percent <- (outlier_count/nrow(startups))*100
 ```
 In this `age_of_company_in_years`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
 
@@ -1119,13 +1109,13 @@ count(startups, internet_activity_score)
 ```
 ## percentage of NA value in internet_activity_score
 ```{r}
-(count(startups, internet_activity_score=="NA"))$freq[2]/nrow(startups)*100
+as.numeric((count(startups, internet_activity_score=="NA"))[2,2]/nrow(startups)*100)
 ```
 ## couning NA based on Company state
 ```{r }
-count(startups[is.na(startups$internet_activity_score), 2])
+NA_count <- as.numeric(count(startups[is.na(startups$internet_activity_score), 2]))
 ```  
-We found that 2/3 of the NA of internet_activity_score is failed, and 1/3 are success
+We found that `NA_count` of the NA of internet_activity_score is failed, and 1/3 are success
 We can deal with NA with two medians, one for failed and other for success
 
 ## Visualiziobg 
@@ -1152,8 +1142,8 @@ startups %>%
 ## counting outlier and finding their percentage
 ```{r}
 outlier = ifelse(is_outlier(startups$internet_activity_score), startups$internet_activity_score, as.numeric(NA))
-outlier_count <- count(outlier!="NA")$freq[1]
-outlier_percnt <- count(outlier!="NA")$freq[1]/nrow(startups)*100
+outlier_count <- sum(!is.na(outlier))
+outlier_percent <- (outlier_count/nrow(startups))*100
 ```
 In this `internet_activity_score`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
 
@@ -1163,11 +1153,11 @@ summary(startups$employee_count)
 ```
 ## list of the values, and their count
 ```{r}
-count(startups$employee_count)
+count(startups, employee_count)
 ```
 ## percentage of NA value in internet_activity_score
 ```{r}
-(count(startups$employee_count=="NA"))$freq[2]/nrow(startups)*100
+as.numeric((count(startups, employee_count=="NA"))[2,2]/nrow(startups)*100)
 ```
  
 approximately 36% of the data is NA, propably its good if we can remove this feature.
@@ -1191,11 +1181,11 @@ summary(startups$last_funding_amount)
 ```
 ## list of the values, and their count
 ```{r}
-count(startups$last_funding_amount)
+count(startups, last_funding_amount)
 ```
 # percentage of NA value in internet_activity_score
 ```{r}
-count(startups$last_funding_amount=="NA")$freq[2]/nrow(startups)*100
+as.numeric((count(startups, last_funding_amount=="NA"))[2,2]/nrow(startups)*100)
 ```
 Once more, about 34% of the data is misssing
 
@@ -1221,11 +1211,13 @@ startups %>%
   geom_boxplot(outlier.color = "red") +
   geom_text(aes(label = outlier), na.rm = TRUE, hjust = -0.3, color="red")
 ```
+this feature needs standardization techiniques in order to change its values.
+
 ## counting outlier and finding their percentage
 ```{r}
 outlier = ifelse(is_outlier(startups$last_funding_amount), startups$last_funding_amount, as.numeric(NA))
-outlier_count<- count(outlier!="NA")$freq[1]
-outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+outlier_count <- sum(!is.na(outlier))
+outlier_percent <- (outlier_count/nrow(startups))*100
 ```
 We have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
 
@@ -1235,7 +1227,7 @@ summary(startups$number_of_investors_in_seed)
 ```
 ## list of the values, and their count
 ```{r}
-count(startups$number_of_investors_in_seed)
+count(startups, number_of_investors_in_seed)
 ```
 ## percentage of NA value in internet_activity_score
 ```{r}
@@ -1256,7 +1248,7 @@ ggplot(startups, aes(x=as.factor(number_of_investors_in_seed) , fill=startups$`d
         plot.title=element_text(size=20, face="bold", color="darkgreen"))
 ```
 
-The bar shows that the most succee and failed companies are located in the first section, and the number of seed investor less than 4, and also the NA data for this features seems to be failed , overwhelmingly we can replace the NA with failed company status with median, and the success one with the median of success compnaies.
+The bar shows that the most succee and failed companies are located in the first section, and the number of seed investor less than 4, and also the NA data for this features seems to be failed , overwhelmingly we can replace the NA with failed company status with median, and the success one with the median of success compnaies. Moreover, around have of this features values is 0, which can indicate that we can convert this feature to categorical one basen on 2 values.
 
 ## Figuring out the outlier and labeld them
 ```{r, warning=FALSE}
@@ -1269,15 +1261,15 @@ startups %>%
 ## counting outlier and finding their percentage
 ```{r}
 outlier = ifelse(is_outlier(startups$number_of_investors_in_seed), startups$number_of_investors_in_seed, as.numeric(NA))
-outlier_count<- count(outlier!="NA")$freq[1]
-outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+outlier_count <- sum(!is.na(outlier))
+outlier_percent <- (outlier_count/nrow(startups))*100
 ```
 
 In this `number_of_investors_in_seed`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
 
 ## frequency of the company sattus when NA applied
 ```{r}
-count(startups[is.na(startups$number_of_investors_in_seed), 2])
+as.numeric(count(startups[is.na(startups$number_of_investors_in_seed), 2]))
 ```
 
 # Summary of the number_of_investors_in_angel_and_or_vc feature
@@ -1286,7 +1278,7 @@ summary(startups$number_of_investors_in_angel_and_or_vc)
 ```
 ## list of the values, and their count
 ```{r}
-count(startups$number_of_investors_in_angel_and_or_vc)
+count(startups, number_of_investors_in_angel_and_or_vc)
 ```
 
 ## percentage of NA value in internet_activity_score
@@ -1326,14 +1318,14 @@ the count function to know each value's frequency
 ## counting outlier and finding their percentage
 ```{r,warning=FALSE}
 outlier = ifelse(is_outlier(startups$number_of_investors_in_angel_and_or_vc), startups$number_of_investors_in_angel_and_or_vc, as.numeric(NA))
-outlier_count<- count(outlier!="NA")$freq[1]
-outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+outlier_count <- sum(!is.na(outlier))
+outlier_percent <- (outlier_count/nrow(startups))*100
 ```
 In this `number_of_investors_in_angel_and_or_vc`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
 
 ## frequency of the company sattus
 ```{r}
-count(startups[is.na(startups$number_of_investors_in_angel_and_or_vc), 2])
+as.numeric(count(startups[is.na(startups$number_of_investors_in_angel_and_or_vc), 2]))
 ```  
 
 Only 3 companies success, and almost 10% failed with NA value, it looks like there is no clear significant for this feature, as it didn't clearly  affect the company status, this could be clear if we repalce the missing value with 0 value  then, balance might take place
@@ -1358,12 +1350,12 @@ summary(startups$'number_of_co-founders')
 
 ## list of the values, and their count
 ```{r}
-count(startups$'number_of_co-founders')
+count(startups, `number_of_co-founders`)
 ```
 
 ## percentage of NA value in internet_activity_score
 ```{r}
-(count(startups$'number_of_co-founders'=="NA")$freq[2]/nrow(startups))*100
+as.numeric((count(startups, 'number_of_co-founders'=="NA")[2,2]/nrow(startups))*100)
 ```  
   
 No missing value for this feature, this might indicate to the significant role of this feature.
@@ -1403,8 +1395,8 @@ Values above 4 considered outlire
 ## counting outlier and finding their percentage
 ```{r}
 outlier = ifelse(is_outlier(startups$`number_of_co-founders`), startups$`number_of_co-founders`, as.numeric(NA))
-outlier_count<- count(outlier!="NA")$freq[1]
-outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+outlier_count <- sum(!is.na(outlier))
+outlier_percent <- (outlier_count/nrow(startups))*100
 ```
 In this `number_of_co-founders`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
 
@@ -1415,12 +1407,12 @@ summary(startups$number_of_of_advisors)
 
 ## list of the values, and their count
 ```{r}
-count(startups$number_of_of_advisors)
+count(startups, number_of_of_advisors)
 ```
 
 ## percentage of NA value in internet_activity_score
 ```{r}
-(count(startups$number_of_of_advisors=="NA")$freq[2]/nrow(startups))*100
+(count(startups, number_of_of_advisors=="NA")[2,2]/nrow(startups))*100
 ```
  
 There is no NA value in this features.
@@ -1455,8 +1447,8 @@ when using summary function that 62% of the compnay dont have advisors.
 ## counting outlier and finding their percentage
 ```{r}
 outlier = ifelse(is_outlier(startups$number_of_of_advisors), startups$number_of_of_advisors, as.numeric(NA))
-outlier_count<- count(outlier!="NA")$freq[1]
-outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+outlier_count <- sum(!is.na(outlier))
+outlier_percent <- (outlier_count/nrow(startups))*100
 ```
 
 In this `number_of_of_advisors`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
@@ -1470,12 +1462,12 @@ summary(startups$team_size_senior_leadership)
 ## list of the values, and their count
 
 ```{r}
-count(startups$team_size_senior_leadership)
+count(startups, team_size_senior_leadership)
 ```
 
 ## percentage of NA value in internet_activity_score
 ```{r}
-(count(startups$team_size_senior_leadership=="NA")$freq[2]/nrow(startups))*100
+(count(startups, team_size_senior_leadership=="NA")[2, 2]/nrow(startups))*100
 ```
   
 No NA value for this feature.
@@ -1509,8 +1501,8 @@ Looke that an outliervalue could be calculatedas above of 9 senior leadership.
 ## counting outlier and finding their percentage
 ```{r}
 outlier = ifelse(is_outlier(startups$team_size_senior_leadership), startups$team_size_senior_leadership, as.numeric(NA))
-outlier_count<- count(outlier!="NA")$freq[1]
-outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+outlier_count <- sum(!is.na(outlier))
+outlier_percent <- (outlier_count/nrow(startups))*100
 ```
 
 In this `age_of_company_in_years`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
@@ -1524,7 +1516,7 @@ summary(startups$team_size_all_employees)
 ## list of the values, and their count
 
 ```{r}
-count(startups$team_size_all_employees)
+count(startups, team_size_all_employees)
 ```
 
 ## percentage of NA value in internet_activity_score
@@ -1569,8 +1561,8 @@ startups %>%
 ## counting outlier and finding their percentage
 ```{r}
 outlier = ifelse(is_outlier(startups$team_size_all_employees), startups$team_size_all_employees, as.numeric(NA))
-outlier_count<- count(outlier!="NA")$freq[1]
-outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+outlier_count <- sum(!is.na(outlier))
+outlier_percent <- (outlier_count/nrow(startups))*100
 ```
 
 In this `team_size_all_employees`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
@@ -1583,7 +1575,7 @@ summary(startups$presence_of_a_top_angel_or_venture_fund_in_previous_round_of_in
 
 ## list of the values, and their count
 ```{r}
-count(startups$presence_of_a_top_angel_or_venture_fund_in_previous_round_of_investment)
+as.data.frame(count(startups, presence_of_a_top_angel_or_venture_fund_in_previous_round_of_investment))
 ```
 
 ## drawing a histogram of  the feature to know its type of distribution which will help us
@@ -1599,11 +1591,11 @@ ggplot(startups, aes(x=presence_of_a_top_angel_or_venture_fund_in_previous_round
         plot.title=element_text(size=20, face="bold", color="darkgreen"))
 ```
    
-We can impement NA value in Decision tree algorith, asit has a big percent.
+We can impement NA value in Decision tree algorith, as it has a big percent.
  
 ## frequency of the company sattus
 ```{r}
-count(startups[is.na(startups$presence_of_a_top_angel_or_venture_fund_in_previous_round_of_investment), 2])
+as.numeric(count(startups[is.na(startups$presence_of_a_top_angel_or_venture_fund_in_previous_round_of_investment), 2]))
 ```
 
 This statement shows the company start-up status when thhis feature has a NA value, lookd like
@@ -1618,13 +1610,13 @@ summary(startups$number_of_of_repeat_investors)
 ## list of the values, and their count
 
 ```{r}
-count(startups$number_of_of_repeat_investors)
+count(startups, number_of_of_repeat_investors)
 ```
 
 ## percentage of NA value in internet_activity_score
 
 ```{r}
-(count(startups$number_of_of_repeat_investors=="NA")$freq[2]/nrow(startups))*100
+as.numeric((count(startups, number_of_of_repeat_investors=="NA")[2, 2]/nrow(startups))*100)
 ```
 
 There is around 9% NA of this feature.
@@ -1656,8 +1648,8 @@ startups %>%
 ## counting outlier and finding their percentage
 ```{r}
 outlier = ifelse(is_outlier(startups$number_of_of_repeat_investors), startups$number_of_of_repeat_investors, as.numeric(NA))
-outlier_count<- count(outlier!="NA")$freq[1]
-outlier_percnt <- (count(outlier!="NA")$freq[1]/nrow(startups))*100
+outlier_count <- sum(!is.na(outlier))
+outlier_percent <- (outlier_count/nrow(startups))*100
 ```
 
 In this `number_of_of_repeat_investors`, we have `outlier_count` outlier value, which is around `outlier_percnt` of the total values.
@@ -1670,7 +1662,7 @@ summary(startups$number_of__sales_support_material)
 ## list of the values, and their count
 
 ```{r}
-count(startups$number_of__sales_support_material)
+count(startups, number_of__sales_support_material)
 ```  
 
 This feature has Nothing value as one of its factors, and this needs to be treated as what value could rather than low, medium and high.
@@ -1678,7 +1670,7 @@ This feature has Nothing value as one of its factors, and this needs to be treat
 ## percentage of NA value in internet_activity_score
 
 ```{r}
-(count(startups$number_of__sales_support_material=="NA")$freq[2]/nrow(startups))*100
+as.numeric((count(startups, number_of__sales_support_material=="NA")[2, 2]/nrow(startups))*100)
 ```  
 
 Almost 10% is NA
@@ -1698,46 +1690,93 @@ ggplot(startups, aes(x=number_of__sales_support_material , fill=startups$`depend
 
 The graph shows that this feature has approximately normal distribution, and most of the NA values have failed start-up company status.
 
-# Summary of years_of_education feature
+
+# Summary of Average size of companies worked for in the past  
 
 ```{r}
-summary(startups$years_of_education)
+summary(startups$average_size_of_companies_worked_for_in_the_past)
 ```
+The summary function shows that most of the co-founders and founders had been working in small-size companies before strating up their own business.   
 
-## list of the values, and their count
+## percentage of NA value 
 
 ```{r}
-count(startups$years_of_education)
+NA_Percent = as.numeric((count(startups, average_size_of_companies_worked_for_in_the_past=="NA")[2,2]/nrow(startups))*100)
+```  
+There is about `NA_Percent` of the founder and co-founder their previous experience is uknown, either to replace the NA value with appropriate value ofthis feature like no experience, or leave it as it is.
+
+## drawing a bar chart of the feature.  
+```{r}
+ggplot(startups, aes(x=average_size_of_companies_worked_for_in_the_past, fill=startups$`dependent-company_status`)) + 
+  geom_bar(aes(y = ..count../sum(..count..)))   +   scale_y_continuous(name = "%", labels=scales::percent) +
+  labs(title = "Average Size of Companies \n worked for in the past", x = "Companies sizes ", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
 ```
 
-## percentage of NA value in internet_activity_score
+The bar graph shows that,the more companies' size the previous co-founder's and founders expreinece had on, the more likely the start-up status will be success.
+
+# Summary of Have been part of startups in the past?  
 
 ```{r}
-(count(startups$years_of_education=="NA")$freq[2]/nrow(startups))*100
+summary(startups$`have_been_part_of_startups_in_the_past?`)
 ```
+ 
+This feature indicate that, the overwhelming majority of foundersand co-founders have neen part
+in the startup in the past.
 
-Multiple values with  each recoreded, except only one value which probably 
 
-# Summary of number_of_recognitions_for_founders_and_co-founders feature 
+## percentage of NA value 
 
 ```{r}
-summary(startups$'number_of_recognitions_for_founders_and_co-founders')
-```
+NA_Percent = as.numeric((count(startups, `have_been_part_of_startups_in_the_past?`=="NA"))[2,2]/nrow(startups)*100)
+```  
+There is about `NA_Percent` of the founder and co-founder that, we dont know whether they have
+been part of stastup , either to replace the NA value with appropriate value of this feature like no experience, or leave it as it is.
 
-### list of the values, and their count
+## drawing a bar chart of the feature.  
+```{r}
+ggplot(startups, aes(x=`have_been_part_of_startups_in_the_past?`, fill=startups$`dependent-company_status`)) + 
+  geom_bar(aes(y = ..count../sum(..count..)), position = "dodge")   +   scale_y_continuous(name = "%", labels=scales::percent) +
+  labs(title = "Founder & co-founder \n startups in the past", x = "been part ", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
+```
+The graph shows no clear view weather been part in the past startup will have s success of failed startups in the coming companies.
+
+# Summary of Have been part of successful startups in the past?  
 
 ```{r}
-count(startups$'number_of_recognitions_for_founders_and_co-founders')
+summary(startups$`have_been_part_of_successful_startups_in_the_past?`)
 ```
+This feature is highly related to the previos one, therefore wehn we're buidling our model we can shoose one of them
 
-### percentage of NA value in internet_activity_score
+
+## percentage of NA valuee
 
 ```{r}
-(count(startups$'number_of_recognitions_for_founders_and_co-founders'=="NA")$freq[2]/nrow(startups))*100
+NA_Percent = as.numeric((count(startups, `have_been_part_of_successful_startups_in_the_past?`=="NA")[2, 2]/nrow(startups))*100)
+
+```  
+There is about `NA_Percent` of the founder and co-founder their previous experience is uknown, either to replace the NA value with appropriate value ofthis feature like no experience, or leave it as it is.
+
+## drawing a bar chart of the feature.  
+```{r}
+ggplot(startups, aes(x=`have_been_part_of_successful_startups_in_the_past?`, fill=startups$`dependent-company_status`)) + 
+  geom_bar(aes(y = ..count../sum(..count..)))   +   scale_y_continuous(name = "%", labels=scales::percent) +
+  labs(title = "Have been part of successful \n startups in the past", x = "Companies sizes ", y = "Count", fill= "Success|Failed\n ") +
+  scale_fill_manual(labels = c("FAILED", "SUCCESS"), values = c("red", "green")) +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=14), axis.title.x=element_text(size=16),
+        axis.text.y=element_text(size=14), axis.title.y=element_text(size=16),
+        plot.title=element_text(size=20, face="bold", color="darkgreen"))
 ```
-
-We have around 17% of the feature's values are missing
-
 # Exploratory Data Analysis
 
 # Feature Engineering
