@@ -1,0 +1,105 @@
+---
+title: "Titanic"
+author: "Mohammed Ali"
+date: "March 12, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library('ggthemes') # visualization
+library('scales') # visualization
+library('mice') # imputation
+library('randomForest') # classification algorithm
+```
+
+# EDA and FE
+## Load and check Data
+```{r data_load}
+train <- read_csv("data/train.csv")
+head(train)
+glimpse(train)
+```
+We have got _12_ variables, 1 response variable which is `Survived` and _1_ id, which leave us _10_ basic predictors. see [variables train description](https://www.kaggle.com/c/titanic/data)
+
+## What’s in a name?
+Passenger title is contained within the passenger name variable and we can use surname to represent families. 
+```{r passenger_title}
+train$Title <- gsub('(.*, )|(\\..*)', '', train$Name)
+
+# Show title counts by sex
+table(train$Sex, train$Title)
+
+# Titles with very low cell counts to be combined to "rare" level
+rare_title <- c('Dona', 'Lady', 'the Countess','Capt', 'Col', 'Don', 
+                'Dr', 'Major', 'Rev', 'Sir', 'Jonkheer')
+
+# Also reassign mlle, ms, and mme accordingly
+train$Title[train$Title == 'Mlle']        <- 'Miss' 
+train$Title[train$Title == 'Ms']          <- 'Miss'
+train$Title[train$Title == 'Mme']         <- 'Mrs' 
+train$Title[train$Title %in% rare_title]  <- 'Rare Title'
+
+# Show title counts by sex again
+table(train$Sex, train$Title)
+```
+```{r passenger_surname}
+train$Surname <- map_chr(train$Name, function(x) strsplit(x, split = '[,.]')[[1]][1])
+```
+
+## Do families sink or swim together?
+Now that we’ve taken care of splitting passenger name into some new variables, we can take it a step further and make some new family variables. First we’re going to make a family size variable based on number of siblings/spouse(s) (maybe someone has more than one spouse?) and number of children/parents.
+
+```{r family_size}
+# Create a family size variable including the passenger themselves
+train$Fsize <- train$SibSp + train$Parch + 1
+
+# Create a family variable 
+train$Family <- paste(train$Surname, train$Fsize, sep='_')
+```
+What does our family size variable look like? To help us understand how it may relate to survival, let’s plot it among the training data.
+
+```{r family_size_plot}
+# Use ggplot2 to visualize the relationship between family size & survival
+ggplot(train[1:891,], aes(x = Fsize, fill = factor(Survived))) +
+  geom_bar(stat='count', position='dodge') +
+  scale_x_continuous(breaks=c(1:11)) +
+  labs(x = 'Family Size') +
+  theme_few()
+```
+
+Ah hah. We can see that there’s a survival penalty to singletons and those with family sizes above 4. We can collapse this variable into three levels which will be helpful since there are comparatively fewer large families. Let’s create a discretized family size variable.
+```{r discretize_family_size}
+# Discretize family size
+train$FsizeD[train$Fsize == 1] <- 'singleton'
+train$FsizeD[train$Fsize < 5 & train$Fsize > 1] <- 'small'
+train$FsizeD[train$Fsize > 4] <- 'large'
+
+# Show family size by survival using a mosaic plot
+mosaicplot(table(train$FsizeD, train$Survived), main='Family Size by Survival', shade=TRUE)
+```
+
+The mosaic plot shows that we preserve our rule that there’s a survival penalty among singletons and large families, but a benefit for passengers in small families. I want to do something further with our age variable, but 263 rows have missing age values, so we will have to wait until after we address missingness.
+
+### Treat a few more variables …
+What’s left? There’s probably some potentially useful information in the passenger cabin variable including about their deck. Let’s take a look.
+```{r cabin}
+# This variable appears to have a lot of missing values
+train$Cabin[1:28]
+##  [1] ""            "C85"         ""            "C123"        ""           
+##  [6] ""            "E46"         ""            ""            ""           
+## [11] "G6"          "C103"        ""            ""            ""           
+## [16] ""            ""            ""            ""            ""           
+## [21] ""            "D56"         ""            "A6"          ""           
+## [26] ""            ""            "C23 C25 C27"
+# The first character is the deck. For example:
+strsplit(train$Cabin[2], NULL)[[1]]
+## [1] "C" "8" "5"
+# Create a Deck variable. Get passenger deck A - F:
+train$Deck<-factor(sapply(train$Cabin, function(x) strsplit(x, NULL)[[1]][1]))
+```
+
+# Data Imputations
+
+# Prediction
