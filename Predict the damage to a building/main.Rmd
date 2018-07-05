@@ -2,29 +2,37 @@
 title: "Predict the damage to a building"
 author: "Mohammed Ali"
 date: "July 3, 2018"
-output: html_document
+output:
+  html_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(DataExplorer)
+library(formattable)
+library(knitr)
 ```
 
-## R Markdown
+```{r}
+train <- as_tibble(read.csv("data/train.csv"))
+#building_structure <- as_tibble(read.csv("data/Building_Structure.csv"))
+#building_ownership <- as_tibble(read.csv("data/Building_Ownership_Use.csv"))
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+train$has_geotechnical_risk <- as.factor(train$has_geotechnical_risk)
+train$has_geotechnical_risk_fault_crack <- as.factor(train$has_geotechnical_risk_fault_crack)
+train$has_geotechnical_risk_flood <- as.factor(train$has_geotechnical_risk_flood)
+train$has_geotechnical_risk_land_settlement <- as.factor(train$has_geotechnical_risk_land_settlement)
+train$has_geotechnical_risk_landslide <- as.factor(train$has_geotechnical_risk_landslide)
+train$has_geotechnical_risk_liquefaction <- as.factor(train$has_geotechnical_risk_liquefaction)
+train$has_geotechnical_risk_other <- as.factor(train$has_geotechnical_risk_other)
+train$has_geotechnical_risk_rock_fall <- as.factor(train$has_geotechnical_risk_rock_fall)
+train$has_repair_started <- as.factor(train$has_repair_started)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+# Data Profiling Report
+## Basic Statistics
+```{r Basic_Statistics, results = 'asis'}
+kable(gather(introduce(train), Name, Value))
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
