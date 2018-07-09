@@ -5,34 +5,187 @@ date: "July 3, 2018"
 output:
   html_document:
     toc: true
+    fig_width: 16
+    fig_height: 10
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(DataExplorer)
-library(formattable)
 library(knitr)
+library(kableExtra)
 ```
 
-```{r}
+# Train
+First let us investigate training dataset, the main dataset.
+
+```{r train_load_basic_structure}
 train <- as_tibble(read.csv("data/train.csv"))
-#building_structure <- as_tibble(read.csv("data/Building_Structure.csv"))
-#building_ownership <- as_tibble(read.csv("data/Building_Ownership_Use.csv"))
+glimpse(train)
+```
+The logical feaures that start with *has* is of type double which will affect the later analysis badly, so let us convert them to a factor of 2 values (**0**, **1**)
 
-train$has_geotechnical_risk <- as.factor(train$has_geotechnical_risk)
-train$has_geotechnical_risk_fault_crack <- as.factor(train$has_geotechnical_risk_fault_crack)
-train$has_geotechnical_risk_flood <- as.factor(train$has_geotechnical_risk_flood)
-train$has_geotechnical_risk_land_settlement <- as.factor(train$has_geotechnical_risk_land_settlement)
-train$has_geotechnical_risk_landslide <- as.factor(train$has_geotechnical_risk_landslide)
-train$has_geotechnical_risk_liquefaction <- as.factor(train$has_geotechnical_risk_liquefaction)
-train$has_geotechnical_risk_other <- as.factor(train$has_geotechnical_risk_other)
-train$has_geotechnical_risk_rock_fall <- as.factor(train$has_geotechnical_risk_rock_fall)
-train$has_repair_started <- as.factor(train$has_repair_started)
+```{r convert_logical_to_factors}
+train[, 5:13] <- map_dfr(train[, 5:13], as.factor)
 ```
 
-# Data Profiling Report
-## Basic Statistics
-```{r Basic_Statistics, results = 'asis'}
-kable(gather(introduce(train), Name, Value))
+Let us investigate the data now 
+```{r summary}
+summary(train)
+plot_str(train)
+```
+
+Ok, now we can perform our analysis on our dataset
+
+## Data Profiling Report
+### Basic Statistics
+```{r Basic_Statistics}
+stat <- introduce(train)
+names(stat) <- c("Rows", "Columns", "Discrete columns", "Continuous columns", "All missing columns", "Missing observations", "Total observations", "Memory allocation")
+
+gather(stat, Name, Value) %>%
+  kable(format.args = list(decimal.mark = ".", big.mark = ",")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+### Missing Data Profile
+Though there are no many missing data, let us see how the missing rows are distributed.
+```{r data_str}
+plot_missing(train)
+```
+
+
+Strange engouh, all missing data in *has_reoair_started* feature which indicates that there is an issue in tracking these building reparing or they might be removed at all, let us see.
+
+### Univariate Distribution
+Let us see how the *univariate* is doing
+
+#### Continuous Features
+```{r uni_var}
+plot_histogram(train)
+```
+
+and another view
+```{r}
+plot_density(train)
+```
+It is clear that there is more damged areas than others.
+
+#### Discreate Features
+```{r bar_chart}
+plot_bar(train)
+```
+
+My Notes from above:
+
+* I think we can exclude *has_repair_started* feaure, clearly it dose not contribute to the building damage degree.
+
+* Other that *area_assessed* feature, features seems not to contribute too much to the target variable.
+
+Let us see the correlation between them
+
+#### Correlation Analysis
+```{r cor_analysis}
+plot_correlation(train)
+```
+
+From correlation analysis we found that:
+
+* There is a strong positive correlaion between *Grade 1* damage and missing information in *has_repair_sarted* feature, and it seems like false correlation.
+
+* *Grade 5* has strong positive correlation with *area_assessed_being_removed* and strong negative correlation with *area_assessed_both*
+
+* Other correlations are so week.
+
+
+let us include other complementary dataset and see the corrleations
+
+## Feature Engieering
+### Building Structure
+Let us start by adding building structure features, first we read the dataset.
+```{r building_structure}
+structure <- as_tibble(read.csv("data/Building_Structure.csv"))
+glimpse(structure)
+```
+
+
+We have 2 quick notes here:
+
+* The number of observations is much more than the train dataset observations which mean it include observations of both train and test datasets. So, we either join the train and test dataset or split this dataset, I will select the first choice.
+
+* We need to convert logical features into factors.
+
+Let us combine train and test datasets
+```{r train_test_join}
+test <- as_tibble(read.csv("data/test.csv"))
+test[, 4:12] <- map_dfr(test[, 4:12], as.factor)
+buildings_all <- full_join(train, test)
+```
+
+It seems that there are 12 buildings in structure dataset have no records in the building datasets.
+Now let us add structure features
+```{r buildings_all_structures_join}
+structure[, 18:28] <- map_dfr(structure[, 18:28], as.factor)
+buildings_all <- full_join(buildings_all, structure)
+```
+
+### Building Ownership
+Now let us add building ownership as well
+```{r ownership}
+ownership <- as_tibble(read.csv("data/Building_Ownership_Use.csv"))
+glimpse(ownership)
+```
+
+Not let us combine it to the main dataset
+
+```{r buildings_all_ownership_join}
+ownership[, 5:17] <- map_dfr(ownership[, 5:17], as.factor)
+buildings_all <- full_join(buildings_all, ownership)
+glimpse(buildings_all)
+```
+
+Now let us investigate the main dataset
+
+### Basic Statistics
+```{r all_sum}
+summary(buildings_all)
+```
+
+### Full missing data profile
+
+```{r all_missing}
+plot_missing(buildings_all)
+```
+The missing information still in good rate, damage grade has 40% missing data because it belongs to the test data
+### Full Continous Profile
+
+```{r all_histogram}
+plot_histogram(buildings_all)
+```
+There is defintely something wrong in the *pre* and *post* features
+
+```{r all_density}
+plot_density(buildings_all)
+```
+
+
+### Full Discreate Profile
+
+```{r all_discreate}
+plot_bar(buildings_all)
+```
+
+### Full Correlation Profile
+```{r all_cor}
+plot_correlation(buildings_all, type = "c")
+```
+
+```{r, out.width = "250%", out.height = "150%"}
+plot_correlation(buildings_all, type = "d")
+```
+
+
+```{r, fig.width = 35, fig.height = 30}
+plot_correlation(buildings_all, type = "d")
 ```
