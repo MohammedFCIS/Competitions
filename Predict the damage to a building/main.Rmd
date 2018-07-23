@@ -15,6 +15,13 @@ library(tidyverse)
 library(DataExplorer)
 library(knitr)
 library(kableExtra)
+library(caTools)
+library(rpart)
+library(rpart.plot)
+library(ROCR)
+library(randomForest)
+library(caret)
+library(e1071)
 ```
 
 # Train
@@ -142,6 +149,7 @@ Not let us combine it to the main dataset
 ```{r buildings_all_ownership_join}
 ownership[, 5:17] <- map_dfr(ownership[, 5:17], as.factor)
 buildings_all <- full_join(buildings_all, ownership)
+#buildings_all[, c(16:18, 20:21)] <- map_dfr(buildings_all[, c(16:18, 20:21)], as.factor)
 glimpse(buildings_all)
 ```
 
@@ -177,15 +185,40 @@ plot_bar(buildings_all)
 ```
 
 ### Full Correlation Profile
+`vdcmun_id`, `district_id` and `ward_id` has the identical effect we will use only one of them
+
 ```{r all_cor}
-plot_correlation(buildings_all, type = "c")
+plot_correlation(buildings_all[,c("damage_grade", "height_ft_post_eq", "district_id", "count_floors_pre_eq", "age_building", "plinth_area_sq_ft", "height_ft_pre_eq","height_ft_post_eq" )])
 ```
 
-```{r, out.width = "250%", out.height = "150%"}
-plot_correlation(buildings_all, type = "d")
+```{r}
+plot_correlation(buildings_all[, c(1:5)], type = "d")
+plot_correlation(buildings_all[, c(3, 6:10)], type = "d")
+plot_correlation(buildings_all[, c(3, 11:15)], type = "d")
+plot_correlation(buildings_all[, c(3, 16:20)], type = "d")
+plot_correlation(buildings_all[, c(3, 21:25)], type = "d")
+plot_correlation(buildings_all[, c(3, 26:30)], type = "d")
+plot_correlation(buildings_all[, c(3, 31:35)], type = "d")
+plot_correlation(buildings_all[, c(3, 36:40)], type = "d")
+plot_correlation(buildings_all[, c(3, 41:45)], type = "d")
+plot_correlation(buildings_all[, c(3, 46:50)], type = "d")
+plot_correlation(buildings_all[, c(3, 51:53)], type = "d")
 ```
 
 
-```{r, fig.width = 35, fig.height = 30}
-plot_correlation(buildings_all, type = "d")
+# Model building
+
+Splite data again to training and testing
+
+```{r}
+training_all <- buildings_all[!is.na(buildings_all$damage_grade),]
+testing_all <- buildings_all[is.na(buildings_all$damage_grade),]
 ```
+
+I will be using 10 fold Cross Validation. That is, 90% of the data is used to train the random forest model.
+
+```{r}
+inTrain <- createDataPa(y=full_training$SalePrice,p=0.9,list=FALSE)
+```
+
+
