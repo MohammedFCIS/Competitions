@@ -128,14 +128,14 @@ We have 2 quick notes here:
 Let us combine train and test datasets
 ```{r train_test_join}
 test <- as_tibble(read.csv("data/test.csv"))
-test[, 4:12] <- map_dfr(test[, 4:12], as.factor)
+#test[, 4:12] <- map_dfr(test[, 4:12], as.factor)
 buildings_all <- full_join(train, test)
 ```
 
 It seems that there are 12 buildings in structure dataset have no records in the building datasets.
 Now let us add structure features
 ```{r buildings_all_structures_join}
-structure[, 18:28] <- map_dfr(structure[, 18:28], as.factor)
+#structure[, 18:28] <- map_dfr(structure[, 18:28], as.factor)
 buildings_all <- full_join(buildings_all, structure)
 ```
 
@@ -149,7 +149,7 @@ glimpse(ownership)
 Not let us combine it to the main dataset
 
 ```{r buildings_all_ownership_join}
-ownership[, 5:17] <- map_dfr(ownership[, 5:17], as.factor)
+#ownership[, 5:17] <- map_dfr(ownership[, 5:17], as.factor)
 buildings_all <- full_join(buildings_all, ownership)
 #buildings_all[, c(16:18, 20:21)] <- map_dfr(buildings_all[, c(16:18, 20:21)], as.factor)
 glimpse(buildings_all)
@@ -211,12 +211,12 @@ plot_correlation(buildings_all[, c(3, 51:53)], type = "d")
 # Building Training Dataset
 Now we need to build the dataset in format that can be used in training and testing by converting all features into numeric ones.
 ```{r adding_area_assesed}
-buildings_all_modified <- data.frame()
-building_removed <- as.numeric(buildings_all$area_assesed == "Building removed")
-Both <- as.numeric(buildings_all$area_assesed == "Both")
-Exterior <- as.numeric(buildings_all$area_assesed == "Exterior")
-Interior <- as.numeric(buildings_all$area_assesed == "Interior")
-buildings_all_modified <- cbind(building_removed , Interior, Exterior, Both)
+buildings_all_modified <- tibble()
+AAA_building_removed <- as.numeric(buildings_all$area_assesed == "Building removed")
+AAA_Both <- as.numeric(buildings_all$area_assesed == "Both")
+AAA_Exterior <- as.numeric(buildings_all$area_assesed == "Exterior")
+AAA_Interior <- as.numeric(buildings_all$area_assesed == "Interior")
+buildings_all_modified <- cbind(AAA_building_removed , AAA_Interior, AAA_Exterior, AAA_Both)
 ```
 
 ```{r damage_grade}
@@ -225,107 +225,88 @@ buildings_all_modified <- cbind(damage_grade, buildings_all_modified)
 ```
 
 ```{r land_surface_condition}
-Moderate_slope <- as.numeric(buildings_all$land_surface_condition == "Moderate slope")
-Steep_slope <- as.numeric(buildings_all$land_surface_condition == "Steep slope")
-buildings_all_modified <- cbind(buildings_all_modified, Moderate_slope, Steep_slope)
+LSC_Moderate_slope <- as.numeric(buildings_all$land_surface_condition == "Moderate slope")
+LSC_Steep_slope <- as.numeric(buildings_all$land_surface_condition == "Steep slope")
+buildings_all_modified <- cbind(buildings_all_modified, LSC_Moderate_slope, LSC_Steep_slope)
 ```
 
 ```{r foundation_type}
-Bamboo_Timber <- as.numeric(buildings_all$foundation_type == "Bamboo/Timber")
-Cement_Stone_Brick <- as.numeric(buildings_all$foundation_type == "Cement-Stone/Brick")
-Mud_mortar_Stone_Brick<- as.numeric(buildings_all$foundation_type == "Mud mortar-Stone/Brick")
-RC <- as.numeric(buildings_all$foundation_type == "RC")
-buildings_all_modified <- cbind(buildings_all_modified, Bamboo_Timber, Cement_Stone_Brick, Mud_mortar_Stone_Brick, RC)
+FT_Bamboo_Timber <- as.numeric(buildings_all$foundation_type == "Bamboo/Timber")
+FT_Cement_Stone_Brick <- as.numeric(buildings_all$foundation_type == "Cement-Stone/Brick")
+FT_Mud_mortar_Stone_Brick<- as.numeric(buildings_all$foundation_type == "Mud mortar-Stone/Brick")
+FT_RC <- as.numeric(buildings_all$foundation_type == "RC")
+buildings_all_modified <- cbind(buildings_all_modified, FT_Bamboo_Timber, FT_Cement_Stone_Brick, FT_Mud_mortar_Stone_Brick, FT_RC)
 ```
 
 ```{r roof_type}
-Bamboo_Timber_Heavy_roof <- as.numeric(buildings_all$roof_type == "Bamboo/Timber-Heavy roof")
-Bamboo_Timber_Light_roof <- as.numeric(buildings_all$roof_type == "Bamboo/Timber-Light roof")
-buildings_all_modified <- cbind(buildings_all_modified, Bamboo_Timber_Light_roof, Bamboo_Timber_Heavy_roof)
+RT_Bamboo_Timber_Heavy_roof <- as.numeric(buildings_all$roof_type == "Bamboo/Timber-Heavy roof")
+RT_Bamboo_Timber_Light_roof <- as.numeric(buildings_all$roof_type == "Bamboo/Timber-Light roof")
+buildings_all_modified <- cbind(buildings_all_modified, RT_Bamboo_Timber_Light_roof, RT_Bamboo_Timber_Heavy_roof)
 ```
 
 ```{r ground_floor_type}
-Brick_Stone <- as.numeric(buildings_all$ground_floor_type == "Brick/Stone")
-Timber<- as.numeric(buildings_all$ground_floor_type == "Timber")
-RC <- as.numeric(buildings_all$ground_floor_type == "RC")
-buildings_all_modified <- cbind(buildings_all_modified, Brick_Stone, Timber, RC)
+GFT_Brick_Stone <- as.numeric(buildings_all$ground_floor_type == "Brick/Stone")
+GFT_Timber<- as.numeric(buildings_all$ground_floor_type == "Timber")
+GFT_RC <- as.numeric(buildings_all$ground_floor_type == "RC")
+buildings_all_modified <- cbind(buildings_all_modified, GFT_Brick_Stone, GFT_Timber, GFT_RC)
 ```
 
 ```{r other_floor_type}
-RCC_RB_RBC <- as.numeric(buildings_all$other_floor_type == "RCC/RB/RBC")
-Timber_Planck <- as.numeric(buildings_all$other_floor_type == "Timber-Planck")
-TImber_Bamboo_Mud <- as.numeric(buildings_all$other_floor_type == "TImber/Bamboo-Mud")
-buildings_all_modified <- cbind(buildings_all_modified, RCC_RB_RBC, TImber_Bamboo_Mud, Timber_Planck)
+OFT_RCC_RB_RBC <- as.numeric(buildings_all$other_floor_type == "RCC/RB/RBC")
+OFT_Timber_Planck <- as.numeric(buildings_all$other_floor_type == "Timber-Planck")
+OFT_TImber_Bamboo_Mud <- as.numeric(buildings_all$other_floor_type == "TImber/Bamboo-Mud")
+buildings_all_modified <- cbind(buildings_all_modified, OFT_RCC_RB_RBC, OFT_TImber_Bamboo_Mud, OFT_Timber_Planck)
 ```
 
 ```{r position}
-Attached_1 <- as.numeric(buildings_all$position == "Attached-1 side")
-Attached_2 <- as.numeric(buildings_all$position == "Attached-2 side")
-Attached_3 <- as.numeric(buildings_all$position == "Attached-3 side")
-buildings_all_modified <- cbind(buildings_all_modified, Attached_1, Attached_2, Attached_3)
+P_Attached_1 <- as.numeric(buildings_all$position == "Attached-1 side")
+P_Attached_2 <- as.numeric(buildings_all$position == "Attached-2 side")
+P_Attached_3 <- as.numeric(buildings_all$position == "Attached-3 side")
+buildings_all_modified <- cbind(buildings_all_modified, P_Attached_1, P_Attached_2, P_Attached_3)
 ```
 
 
 ```{r plan_configuration}
-Central_Courtyard <- as.numeric(buildings_all$plan_configuration == "Building with Central Courtyard")
-E_shape <- as.numeric(buildings_all$plan_configuration == "E-shape")
-H_shape<- as.numeric(buildings_all$plan_configuration == "H-shape")
-L_shape <- as.numeric(buildings_all$plan_configuration == "L-shape")
-T_shape <- as.numeric(buildings_all$plan_configuration == "T-shape")
-U_shape <- as.numeric(buildings_all$plan_configuration == "U-shape")
-Rectangular <- as.numeric(buildings_all$plan_configuration == "Rectangular")
-Square <- as.numeric(buildings_all$plan_configuration == "Square")
-Multi_projected <- as.numeric(buildings_all$plan_configuration == "Multi_projected")
-buildings_all_modified <- cbind(buildings_all_modified, Central_Courtyard, E_shape, H_shape, L_shape, T_shape, U_shape, Rectangular, Square, Multi_projected)
+PC_Central_Courtyard <- as.numeric(buildings_all$plan_configuration == "Building with Central Courtyard")
+PC_E_shape <- as.numeric(buildings_all$plan_configuration == "E-shape")
+PC_H_shape<- as.numeric(buildings_all$plan_configuration == "H-shape")
+PC_L_shape <- as.numeric(buildings_all$plan_configuration == "L-shape")
+PC_T_shape <- as.numeric(buildings_all$plan_configuration == "T-shape")
+PC_U_shape <- as.numeric(buildings_all$plan_configuration == "U-shape")
+PC_Rectangular <- as.numeric(buildings_all$plan_configuration == "Rectangular")
+PC_Square <- as.numeric(buildings_all$plan_configuration == "Square")
+PC_Multi_projected <- as.numeric(buildings_all$plan_configuration == "Multi_projected")
+buildings_all_modified <- cbind(buildings_all_modified, PC_Central_Courtyard, PC_E_shape, PC_H_shape, PC_L_shape, PC_T_shape, PC_U_shape, PC_Rectangular, PC_Square, PC_Multi_projected)
 ```
 
 
 ```{r condition_post_eq}
-Covered_by_landslide <- as.numeric(buildings_all$condition_post_eq == "Covered by landslide")
-Damaged_Not_used <- as.numeric(buildings_all$condition_post_eq == "Damaged-Not used")
-Damaged_Repaired_and_used <- as.numeric(buildings_all$condition_post_eq == "Damaged-Repaired and used")
-Damaged_Rubble_clear<- as.numeric(buildings_all$condition_post_eq == "Damaged-Rubble clear")
-Damaged_Rubble_unclear <- as.numeric(buildings_all$condition_post_eq == "Damaged-Rubble unclear")
-Clear_New_building_built <- as.numeric(buildings_all$condition_post_eq == "Damaged-Rubble Clear-New building built")
-Damaged_Used_in_risk <- as.numeric(buildings_all$condition_post_eq == "Damaged-Used in risk")
-buildings_all_modified <- cbind(buildings_all_modified, Covered_by_landslide, Damaged_Used_in_risk, Damaged_Rubble_unclear, Damaged_Rubble_clear, Damaged_Repaired_and_used, Damaged_Not_used, Clear_New_building_built)
+CPE_Covered_by_landslide <- as.numeric(buildings_all$condition_post_eq == "Covered by landslide")
+CPE_Damaged_Not_used <- as.numeric(buildings_all$condition_post_eq == "Damaged-Not used")
+CPE_Damaged_Repaired_and_used <- as.numeric(buildings_all$condition_post_eq == "Damaged-Repaired and used")
+CPE_Damaged_Rubble_clear<- as.numeric(buildings_all$condition_post_eq == "Damaged-Rubble clear")
+CPE_Damaged_Rubble_unclear <- as.numeric(buildings_all$condition_post_eq == "Damaged-Rubble unclear")
+CPE_Clear_New_building_built <- as.numeric(buildings_all$condition_post_eq == "Damaged-Rubble Clear-New building built")
+CPE_Damaged_Used_in_risk <- as.numeric(buildings_all$condition_post_eq == "Damaged-Used in risk")
+buildings_all_modified <- cbind(buildings_all_modified, CPE_Covered_by_landslide, CPE_Damaged_Used_in_risk, CPE_Damaged_Rubble_unclear, CPE_Damaged_Rubble_clear, CPE_Damaged_Repaired_and_used, CPE_Damaged_Not_used, CPE_Clear_New_building_built)
 ```
 
 
 ```{r legal_ownership_status}
-Institutional <- as.numeric(buildings_all$legal_ownership_status == "Institutional")
-Public <- as.numeric(buildings_all$legal_ownership_status == "Public")
-Private <- as.numeric(buildings_all$legal_ownership_status == "Private")
-buildings_all_modified <- cbind(buildings_all_modified, Institutional, Public, Private)
+LOS_Institutional <- as.numeric(buildings_all$legal_ownership_status == "Institutional")
+LOS_Public <- as.numeric(buildings_all$legal_ownership_status == "Public")
+LOS_Private <- as.numeric(buildings_all$legal_ownership_status == "Private")
+buildings_all_modified <- cbind(buildings_all_modified, LOS_Institutional, LOS_Public, LOS_Private)
 ```
 
 ```{r other_features}
-buildings_all_modified <- cbind(buildings_all_modified , map_dfr(buildings_all[, 5:13], as.numeric))
-buildings_all_modified <- cbind(buildings_all_modified , map_dfr(buildings_all[, 29:39], as.numeric))
-buildings_all_modified <- cbind(buildings_all_modified , map_dfr(buildings_all[, 42:53], as.numeric))
-buildings_all_modified <- as.data.frame(buildings_all_modified)
-```
-# Feature Selection Approaches
-Finding the most important predictor variables (of features) that explains major part of variance of the response variable is key to identify and build high performing models.
-
-## Random Forest Method
-
-fit the random forest
-```{r}
-training_all <- buildings_all[!is.na(buildings_all$damage_grade),]
-testing_all <- buildings_all[is.na(buildings_all$damage_grade),]
-```
-
-```{r}
-cf1 <- cforest(damage_grade ~ ., data= subset(training_all, select =  -c(building_id, district_id)), control=cforest_unbiased(mtry=2,ntree=50)) 
-```
-
- 
-## Relative Importance
-```{r}
-lmMod <- lm(damage_grade ~ has_geotechnical_risk , data = training_all_new)  # fit lm() model
-relImportance <- calc.relimp(lmMod, type = "lmg", rela = TRUE)  # calculate relative importance scaled to 100
-sort(relImportance$lmg, decreasing=TRUE)  # relative importance
+buildings_all_modified <- cbind(buildings_all_modified , buildings_all[, 5:13])
+buildings_all_modified <- cbind(buildings_all_modified , buildings_all[, 16:21])
+buildings_all_modified <- cbind(buildings_all_modified , buildings_all[, 29:39])
+buildings_all_modified <- cbind(buildings_all_modified , buildings_all[, 42:53])
+buildings_all_modified <- as_tibble(buildings_all_modified)
+glimpse(buildings_all_modified)
+write.csv(buildings_all_modified, "buildings_final")
 ```
 
 
