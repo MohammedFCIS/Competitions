@@ -136,7 +136,7 @@ It seems that there are 12 buildings in structure dataset have no records in the
 Now let us add structure features
 ```{r buildings_all_structures_join}
 #structure[, 18:28] <- map_dfr(structure[, 18:28], as.factor)
-buildings_all <- full_join(buildings_all, structure)
+buildings_all <- inner_join(buildings_all, structure)
 ```
 
 ### Building Ownership
@@ -150,7 +150,7 @@ Not let us combine it to the main dataset
 
 ```{r buildings_all_ownership_join}
 #ownership[, 5:17] <- map_dfr(ownership[, 5:17], as.factor)
-buildings_all <- full_join(buildings_all, ownership)
+buildings_all <- inner_join(buildings_all, ownership)
 #buildings_all[, c(16:18, 20:21)] <- map_dfr(buildings_all[, c(16:18, 20:21)], as.factor)
 glimpse(buildings_all)
 ```
@@ -220,8 +220,8 @@ buildings_all_modified <- cbind(AAA_building_removed , AAA_Interior, AAA_Exterio
 ```
 
 ```{r damage_grade}
-damage_grade <-as.numeric(buildings_all$damage_grade)
-buildings_all_modified <- cbind(damage_grade, buildings_all_modified)
+damage_grade_id <-as.numeric(buildings_all$damage_grade)
+buildings_all_modified <- cbind(damage_grade_id, buildings_all_modified)
 ```
 
 ```{r land_surface_condition}
@@ -304,6 +304,8 @@ buildings_all_modified <- cbind(buildings_all_modified , buildings_all[, 5:13])
 buildings_all_modified <- cbind(buildings_all_modified , buildings_all[, 16:21])
 buildings_all_modified <- cbind(buildings_all_modified , buildings_all[, 29:39])
 buildings_all_modified <- cbind(buildings_all_modified , buildings_all[, 42:53])
+buildings_all_modified <- cbind(buildings_all_modified , buildings_all$building_id)
+buildings_all_modified <- cbind(buildings_all_modified , buildings_all$damage_grade)
 buildings_all_modified <- as_tibble(buildings_all_modified)
 glimpse(buildings_all_modified)
 write.csv(buildings_all_modified, "buildings_final")
