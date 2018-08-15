@@ -31,18 +31,18 @@ First let us investigate training dataset, the main dataset.
 
 ```{r train_load_basic_structure}
 train <- as_tibble(read.csv("data/train.csv"))
-glimpse(train)
+#glimpse(train)
 ```
 The logical feaures that start with *has* is of type double which will affect the later analysis badly, so let us convert them to a factor of 2 values (**0**, **1**)
 
 ```{r convert_logical_to_factors}
-train[, 5:13] <- map_dfr(train[, 5:13], as.factor)
+#train[, 5:13] <- map_dfr(train[, 5:13], as.factor)
 ```
 
 Let us investigate the data now 
 ```{r summary}
-summary(train)
-plot_str(train)
+#summary(train)
+#plot_str(train)
 ```
 
 Ok, now we can perform our analysis on our dataset
@@ -50,18 +50,18 @@ Ok, now we can perform our analysis on our dataset
 ## Data Profiling Report
 ### Basic Statistics
 ```{r Basic_Statistics}
-stat <- introduce(train)
-names(stat) <- c("Rows", "Columns", "Discrete columns", "Continuous columns", "All missing columns", "Missing observations", "Total observations", "Memory allocation")
+#stat <- introduce(train)
+#names(stat) <- c("Rows", "Columns", "Discrete columns", "Continuous columns", "All missing columns", "Missing observations", "Total observations", "Memory allocation")
 
-gather(stat, Name, Value) %>%
-  kable(format.args = list(decimal.mark = ".", big.mark = ",")) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+# gather(stat, Name, Value) %>%
+#   kable(format.args = list(decimal.mark = ".", big.mark = ",")) %>%
+#   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
 ### Missing Data Profile
 Though there are no many missing data, let us see how the missing rows are distributed.
 ```{r data_str}
-plot_missing(train)
+#plot_missing(train)
 ```
 
 
@@ -72,18 +72,18 @@ Let us see how the *univariate* is doing
 
 #### Continuous Features
 ```{r uni_var}
-plot_histogram(train)
+#plot_histogram(train)
 ```
 
 and another view
 ```{r}
-plot_density(train)
+#plot_density(train)
 ```
 It is clear that there is more damged areas than others.
 
 #### Discreate Features
 ```{r bar_chart}
-plot_bar(train)
+#plot_bar(train)
 ```
 
 My Notes from above:
@@ -96,7 +96,7 @@ Let us see the correlation between them
 
 #### Correlation Analysis
 ```{r cor_analysis}
-plot_correlation(train)
+#plot_correlation(train)
 ```
 
 From correlation analysis we found that:
@@ -115,7 +115,7 @@ let us include other complementary dataset and see the corrleations
 Let us start by adding building structure features, first we read the dataset.
 ```{r building_structure}
 structure <- as_tibble(read.csv("data/Building_Structure.csv"))
-glimpse(structure)
+#glimpse(structure)
 ```
 
 
@@ -143,7 +143,7 @@ buildings_all <- inner_join(buildings_all, structure)
 Now let us add building ownership as well
 ```{r ownership}
 ownership <- as_tibble(read.csv("data/Building_Ownership_Use.csv"))
-glimpse(ownership)
+#glimpse(ownership)
 ```
 
 Not let us combine it to the main dataset
@@ -152,59 +152,59 @@ Not let us combine it to the main dataset
 #ownership[, 5:17] <- map_dfr(ownership[, 5:17], as.factor)
 buildings_all <- inner_join(buildings_all, ownership)
 #buildings_all[, c(16:18, 20:21)] <- map_dfr(buildings_all[, c(16:18, 20:21)], as.factor)
-glimpse(buildings_all)
+#glimpse(buildings_all)
 ```
 
 Now let us investigate the main dataset
 
 ### Basic Statistics
 ```{r all_sum}
-summary(buildings_all)
+#summary(buildings_all)
 ```
 
 ### Full missing data profile
 
 ```{r all_missing}
-plot_missing(buildings_all)
+#plot_missing(buildings_all)
 ```
 The missing information still in good rate, damage grade has 40% missing data because it belongs to the test data
 ### Full Continous Profile
 
 ```{r all_histogram}
-plot_histogram(buildings_all)
+#plot_histogram(buildings_all)
 ```
 There is defintely something wrong in the *pre* and *post* features
 
 ```{r all_density}
-plot_density(buildings_all)
+#plot_density(buildings_all)
 ```
 
 
 ### Full Discreate Profile
 
 ```{r all_discreate}
-plot_bar(buildings_all)
+#plot_bar(buildings_all)
 ```
 
 ### Full Correlation Profile
 `vdcmun_id`, `district_id` and `ward_id` has the identical effect we will use only one of them
 
 ```{r all_cor}
-plot_correlation(buildings_all[,c("damage_grade", "height_ft_post_eq", "district_id", "count_floors_pre_eq", "age_building", "plinth_area_sq_ft", "height_ft_pre_eq","height_ft_post_eq" )])
+#plot_correlation(buildings_all[,c("damage_grade", "height_ft_post_eq", "district_id", "count_floors_pre_eq", "age_building", "plinth_area_sq_ft", "height_ft_pre_eq","height_ft_post_eq" )])
 ```
 
 ```{r}
-plot_correlation(buildings_all[, c(1:5)], type = "d")
-plot_correlation(buildings_all[, c(3, 6:10)], type = "d")
-plot_correlation(buildings_all[, c(3, 11:15)], type = "d")
-plot_correlation(buildings_all[, c(3, 16:20)], type = "d")
-plot_correlation(buildings_all[, c(3, 21:25)], type = "d")
-plot_correlation(buildings_all[, c(3, 26:30)], type = "d")
-plot_correlation(buildings_all[, c(3, 31:35)], type = "d")
-plot_correlation(buildings_all[, c(3, 36:40)], type = "d")
-plot_correlation(buildings_all[, c(3, 41:45)], type = "d")
-plot_correlation(buildings_all[, c(3, 46:50)], type = "d")
-plot_correlation(buildings_all[, c(3, 51:53)], type = "d")
+# plot_correlation(buildings_all[, c(1:5)], type = "d")
+# plot_correlation(buildings_all[, c(3, 6:10)], type = "d")
+# plot_correlation(buildings_all[, c(3, 11:15)], type = "d")
+# plot_correlation(buildings_all[, c(3, 16:20)], type = "d")
+# plot_correlation(buildings_all[, c(3, 21:25)], type = "d")
+# plot_correlation(buildings_all[, c(3, 26:30)], type = "d")
+# plot_correlation(buildings_all[, c(3, 31:35)], type = "d")
+# plot_correlation(buildings_all[, c(3, 36:40)], type = "d")
+# plot_correlation(buildings_all[, c(3, 41:45)], type = "d")
+# plot_correlation(buildings_all[, c(3, 46:50)], type = "d")
+# plot_correlation(buildings_all[, c(3, 51:53)], type = "d")
 ```
 
 
@@ -306,9 +306,10 @@ buildings_all_modified <- cbind(buildings_all_modified , buildings_all[, 29:39])
 buildings_all_modified <- cbind(buildings_all_modified , buildings_all[, 42:53])
 buildings_all_modified <- cbind(buildings_all_modified , buildings_all$building_id)
 buildings_all_modified <- cbind(buildings_all_modified , buildings_all$damage_grade)
+buildings_all_modified <- cbind(buildings_all_modified , buildings_all$district_id)
 buildings_all_modified <- as_tibble(buildings_all_modified)
 glimpse(buildings_all_modified)
-write.csv(buildings_all_modified, "buildings_final")
+write.csv(buildings_all_modified, "buildings_final.csv", row.names = FALSE)
 ```
 
 
