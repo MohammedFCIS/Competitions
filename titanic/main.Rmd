@@ -8,44 +8,53 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library('ggthemes') # visualization
 library('scales') # visualization
 library('mice') # imputation
 library('randomForest') # classification algorithm
+library(h2o)
 ```
 
 # EDA and FE
 ## Load and check Data
 ```{r data_load}
-train <- read_csv("data/train.csv")
-head(train)
-glimpse(train)
+train <- read.csv('data/train.csv', stringsAsFactors = F)
+test  <- read.csv('data/test.csv', stringsAsFactors = F)
+
+full  <- bind_rows(train, test) # bind training & test data
+glimpse(full)
 ```
 We have got _12_ variables, 1 response variable which is `Survived` and _1_ id, which leave us _10_ basic predictors. see [variables train description](https://www.kaggle.com/c/titanic/data)
 
 ## What’s in a name?
 Passenger title is contained within the passenger name variable and we can use surname to represent families. 
 ```{r passenger_title}
-train$Title <- gsub('(.*, )|(\\..*)', '', train$Name)
+# Grab title from passenger names
+full$Title <- gsub('(.*, )|(\\..*)', '', full$Name)
 
 # Show title counts by sex
-table(train$Sex, train$Title)
+table(full$Sex, full$Title)
+```
 
+```{r}
 # Titles with very low cell counts to be combined to "rare" level
 rare_title <- c('Dona', 'Lady', 'the Countess','Capt', 'Col', 'Don', 
                 'Dr', 'Major', 'Rev', 'Sir', 'Jonkheer')
 
 # Also reassign mlle, ms, and mme accordingly
-train$Title[train$Title == 'Mlle']        <- 'Miss' 
-train$Title[train$Title == 'Ms']          <- 'Miss'
-train$Title[train$Title == 'Mme']         <- 'Mrs' 
-train$Title[train$Title %in% rare_title]  <- 'Rare Title'
+full$Title[full$Title == 'Mlle']        <- 'Miss' 
+full$Title[full$Title == 'Ms']          <- 'Miss'
+full$Title[full$Title == 'Mme']         <- 'Mrs' 
+full$Title[full$Title %in% rare_title]  <- 'Rare Title'
 
 # Show title counts by sex again
-table(train$Sex, train$Title)
+table(full$Sex, full$Title)
 ```
+
 ```{r passenger_surname}
-train$Surname <- map_chr(train$Name, function(x) strsplit(x, split = '[,.]')[[1]][1])
+# Finally, grab surname from passenger name
+full$Surname <- sapply(full$Name,  
+                      function(x) strsplit(x, split = '[,.]')[[1]][1])
+cat(paste('We have <b>', nlevels(factor(full$Surname)), '</b> unique surnames. I would be interested to infer ethnicity based on surname --- another time.'))
 ```
 
 ## Do families sink or swim together?
@@ -53,31 +62,30 @@ Now that we’ve taken care of splitting passenger name into some new variables,
 
 ```{r family_size}
 # Create a family size variable including the passenger themselves
-train$Fsize <- train$SibSp + train$Parch + 1
+full$Fsize <- full$SibSp + full$Parch + 1
 
 # Create a family variable 
-train$Family <- paste(train$Surname, train$Fsize, sep='_')
+full$Family <- paste(full$Surname, full$Fsize, sep='_')
 ```
 What does our family size variable look like? To help us understand how it may relate to survival, let’s plot it among the training data.
 
 ```{r family_size_plot}
 # Use ggplot2 to visualize the relationship between family size & survival
-ggplot(train[1:891,], aes(x = Fsize, fill = factor(Survived))) +
+ggplot(full[1:891,], aes(x = Fsize, fill = factor(Survived))) +
   geom_bar(stat='count', position='dodge') +
   scale_x_continuous(breaks=c(1:11)) +
-  labs(x = 'Family Size') +
-  theme_few()
+  labs(x = 'Family Size')
 ```
 
 Ah hah. We can see that there’s a survival penalty to singletons and those with family sizes above 4. We can collapse this variable into three levels which will be helpful since there are comparatively fewer large families. Let’s create a discretized family size variable.
 ```{r discretize_family_size}
 # Discretize family size
-train$FsizeD[train$Fsize == 1] <- 'singleton'
-train$FsizeD[train$Fsize < 5 & train$Fsize > 1] <- 'small'
-train$FsizeD[train$Fsize > 4] <- 'large'
+full$FsizeD[full$Fsize == 1] <- 'singleton'
+full$FsizeD[full$Fsize < 5 & full$Fsize > 1] <- 'small'
+full$FsizeD[full$Fsize > 4] <- 'large'
 
 # Show family size by survival using a mosaic plot
-mosaicplot(table(train$FsizeD, train$Survived), main='Family Size by Survival', shade=TRUE)
+mosaicplot(table(full$FsizeD, full$Survived), main='Family Size by Survival', shade=TRUE)
 ```
 
 The mosaic plot shows that we preserve our rule that there’s a survival penalty among singletons and large families, but a benefit for passengers in small families. I want to do something further with our age variable, but 263 rows have missing age values, so we will have to wait until after we address missingness.
@@ -86,20 +94,389 @@ The mosaic plot shows that we preserve our rule that there’s a survival penalt
 What’s left? There’s probably some potentially useful information in the passenger cabin variable including about their deck. Let’s take a look.
 ```{r cabin}
 # This variable appears to have a lot of missing values
-train$Cabin[1:28]
-##  [1] ""            "C85"         ""            "C123"        ""           
-##  [6] ""            "E46"         ""            ""            ""           
-## [11] "G6"          "C103"        ""            ""            ""           
-## [16] ""            ""            ""            ""            ""           
-## [21] ""            "D56"         ""            "A6"          ""           
-## [26] ""            ""            "C23 C25 C27"
+full$Cabin[1:28]
 # The first character is the deck. For example:
-strsplit(train$Cabin[2], NULL)[[1]]
-## [1] "C" "8" "5"
+strsplit(full$Cabin[2], NULL)[[1]]
 # Create a Deck variable. Get passenger deck A - F:
-train$Deck<-factor(sapply(train$Cabin, function(x) strsplit(x, NULL)[[1]][1]))
+full$Deck<-factor(sapply(full$Cabin, function(x) strsplit(x, NULL)[[1]][1]))
 ```
 
 # Data Imputations
+```{r}
+# Passengers 62 and 830 are missing Embarkment
+full[c(62, 830), 'Embarked']
+cat(paste('We will infer their values for **embarkment** based on present data that we can imagine may be relevant: **passenger class** and **fare**. We see that they paid<b> $', full[c(62, 830), 'Fare'][[1]][1], '</b>and<b> $', full[c(62, 830), 'Fare'][[1]][2], '</b>respectively and their classes are<b>', full[c(62, 830), 'Pclass'][[1]][1], '</b>and<b>', full[c(62, 830), 'Pclass'][[1]][2], '</b>. So from where did they embark?'))
+```
+
+```{r}
+# Get rid of our missing passenger IDs
+embark_fare <- full %>%
+  filter(PassengerId != 62 & PassengerId != 830)
+
+# Use ggplot2 to visualize embarkment, passenger class, & median fare
+ggplot(embark_fare, aes(x = Embarked, y = Fare, fill = factor(Pclass))) +
+  geom_boxplot() +
+  geom_hline(aes(yintercept=80), 
+    colour='red', linetype='dashed', lwd=2) +
+  scale_y_continuous(labels=dollar_format())
+```
+
+
+Voilà! The median fare for a first class passenger departing from Charbourg (‘C’) coincides nicely with the $80 paid by our embarkment-deficient passengers. I think we can safely replace the NA values with ‘C’.
+
+## Since their fare was $80 for 1st class, they most likely embarked from 'C'
+```{r}
+full$Embarked[c(62, 830)] <- 'C'
+```
+
+We’re close to fixing the handful of NA values here and there. Passenger on row 1044 has an NA Fare value.
+
+## Show row 1044
+```{r}
+full[1044, ]
+```
+
+This is a third class passenger who departed from Southampton (‘S’). Let’s visualize Fares among all others sharing their class and embarkment (n = 494).
+
+```{r}
+ggplot(full[full$Pclass == '3' & full$Embarked == 'S', ], 
+  aes(x = Fare)) +
+  geom_density(fill = '#99d6ff', alpha=0.4) + 
+  geom_vline(aes(xintercept=median(Fare, na.rm=T)),
+    colour='red', linetype='dashed', lwd=1) +
+  scale_x_continuous(labels=dollar_format())
+```
+
+
+From this visualization, it seems quite reasonable to replace the NA Fare value with median for their class and embarkment which is $8.05.
+
+## Replace missing fare value with median fare for class/embarkment
+```{r}
+full$Fare[1044] <- median(full[full$Pclass == '3' & full$Embarked == 'S', ]$Fare, na.rm = TRUE)
+```
+
+Finally, as we noted earlier, there are quite a few missing Age values in our data. We are going to get a bit more fancy in imputing missing age values. Why? Because we can. We will create a model predicting ages based on other variables.
+
+## Show number of missing Age values
+```{r}
+sum(is.na(full$Age))
+```
+
+
+We could definitely use rpart (recursive partitioning for regression) to predict missing ages, but I’m going to use the mice package for this task just for something different. You can read more about multiple imputation using chained equations in r here (PDF). Since we haven’t done it yet, I’ll first factorize the factor variables and then perform mice imputation.
+
+## Make variables factors into factors
+```{r}
+factor_vars <- c('PassengerId','Pclass','Sex','Embarked',
+                 'Title','Surname','Family','FsizeD')
+
+full[factor_vars] <- lapply(full[factor_vars], function(x) as.factor(x))
+```
+
+## Set a random seed
+```{r}
+set.seed(129)
+```
+
+## Perform mice imputation, excluding certain less-than-useful variables:
+```{r}
+mice_mod <- mice(full[, !names(full) %in% c('PassengerId','Name','Ticket','Cabin','Family','Surname','Survived')], method='rf') 
+```
+
+## Save the complete output
+```{r}
+mice_output <- complete(mice_mod)
+```
+
+Let’s compare the results we get with the original distribution of passenger ages to ensure that nothing has gone completely awry.
+
+## Plot age distributions
+```{r}
+par(mfrow=c(1,2))
+hist(full$Age, freq=F, main='Age: Original Data', 
+  col='darkgreen', ylim=c(0,0.04))
+hist(mice_output$Age, freq=F, main='Age: MICE Output', 
+  col='lightgreen', ylim=c(0,0.04))
+```
+
+
+## Replace Age variable from the mice model.
+```{r}
+full$Age <- mice_output$Age
+```
+
+## Show new number of missing Age values
+```{r}
+sum(is.na(full$Age))
+```
+
+# Feature Engineering: Round 2
+Now that we know everyone’s age, we can create a couple of new age-dependent variables: Child and Mother. A child will simply be someone under 18 years of age and a mother is a passenger who is 1) female, 2) is over 18, 3) has more than 0 children (no kidding!), and 4) does not have the title ‘Miss’.
+
+ First we'll look at the relationship between age & survival
+```{r}
+ggplot(full[1:891,], aes(Age, fill = factor(Survived))) + 
+  geom_histogram() + 
+  # I include Sex since we know (a priori) it's a significant predictor
+  facet_grid(.~Sex)
+```
+
+```{r}
+# Create the column child, and indicate whether child or adult
+full$Child[full$Age < 18] <- 'Child'
+full$Child[full$Age >= 18] <- 'Adult'
+
+# Show counts
+table(full$Child, full$Survived)
+```
+
+
+
+Looks like being a child doesn’t hurt, but it’s not going to necessarily save you either! We will finish off our feature engineering by creating the Mother variable. Maybe we can hope that mothers are more likely to have survived on the Titanic.
+
+## Adding Mother variable
+```{r}
+full$Mother <- 'Not Mother'
+full$Mother[full$Sex == 'female' & full$Parch > 0 & full$Age > 18 & full$Title != 'Miss'] <- 'Mother'
+```
+
+## Show counts
+```{r}
+table(full$Mother, full$Survived)
+```
+
+```{r}
+# Finish by factorizing our two new factor variables
+full$Child  <- factor(full$Child)
+full$Mother <- factor(full$Mother)
+```
+
+
+All of the variables we care about should be taken care of and there should be no missing data. I’m going to double check just to be sure:
+```{r}
+md.pattern(full)
+```
+
+Wow! We have finally finished treating all of the relevant missing values in the Titanic dataset which has included some fancy imputation with mice. We have also successfully created several new variables which we hope will help us build a model which reliably predicts survival.
 
 # Prediction
+At last we’re ready to predict who survives among passengers of the Titanic based on variables that we carefully curated and treated for missing values. For this, we will rely on the randomForest classification algorithm; we spent all that time on imputation, after all.
+
+## Split into training & test sets
+Our first step is to split the data back into the original test and training sets.
+
+```{r}
+# Split the data back into a train set and a test set
+train <- full[1:891,]
+test <- full[892:1309,]
+```
+
+## Building the model
+We then build our model using randomForest on the training set.
+
+```{r}
+# Set a random seed
+set.seed(754)
+
+# Build the model (note: not all possible variables are used)
+rf_model <- randomForest(factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + 
+                                            Fare + Embarked + Title + 
+                                            FsizeD + Child + Mother,
+                                            data = train)
+
+# Show model error
+plot(rf_model, ylim=c(0,0.36))
+legend('topright', colnames(rf_model$err.rate), col=1:3, fill=1:3)
+```
+
+The black line shows the overall error rate which falls below 20%. The red and green lines show the error rate for ‘died’ and ‘survived’ respectively. We can see that right now we’re much more successful predicting death than we are survival. What does that say about me, I wonder?
+
+## Variable importance
+Let’s look at relative variable importance by plotting the mean decrease in Gini calculated across all trees.
+
+```{r}
+# Get importance
+importance    <- importance(rf_model)
+varImportance <- data.frame(Variables = row.names(importance), 
+                            Importance = round(importance[ ,'MeanDecreaseGini'],2))
+
+# Create a rank variable based on importance
+rankImportance <- varImportance %>%
+  mutate(Rank = paste0('#',dense_rank(desc(Importance))))
+
+# Use ggplot2 to visualize the relative importance of variables
+ggplot(rankImportance, aes(x = reorder(Variables, Importance), 
+    y = Importance, fill = Importance)) +
+  geom_bar(stat='identity') + 
+  geom_text(aes(x = Variables, y = 0.5, label = Rank),
+    hjust=0, vjust=0.55, size = 4, colour = 'red') +
+  labs(x = 'Variables') +
+  coord_flip()
+```
+
+
+Whoa, glad we made our title variable! It has the highest relative importance out of all of our predictor variables. I think I’m most surprised to see that passenger class fell to #5, but maybe that’s just bias coming from watching the movie Titanic too many times as a kid.
+
+## Prediction!
+We’re ready for the final step — making our prediction! When we finish here, we could iterate through the preceding steps making tweaks as we go or fit the data using different models or use different combinations of variables to achieve better predictions. But this is a good starting (and stopping) point for me now.
+
+```{r}
+# Predict using the test set
+prediction <- predict(rf_model, test)
+
+# Save the solution to a dataframe with two columns: PassengerId and Survived (prediction)
+solution <- data.frame(PassengerID = test$PassengerId, Survived = prediction)
+
+# Write the solution to file
+write.csv(solution, file = 'rf_mod_Solution.csv', row.names = F)
+```
+
+## H2.o
+```{r}
+train$Survived <- as.factor(train$Survived)
+localH2O <- h2o.init(nthreads = -1)
+h2o.init()
+train.h2o <- as.h2o(train)
+test.h2o <- as.h2o(test)
+colnames(train.h2o)
+y.dep <- 2
+x.indep <- c(3, 5:8, 10, 12, 13, 15, 17, 19, 20)
+# Pclass + Sex + Age + SibSp + Parch + 
+#                                             Fare + Embarked + Title + 
+#                                             FsizeD + Child + Mother,
+#                                           data = train
+ntrees_opt <- c(3100)
+maxdepth_opt <- c(20, 18)
+hyper_parameters <- list(ntrees=ntrees_opt,
+                         max_depth=maxdepth_opt)
+```
+### H2.o GBM
+
+```{r}
+r <- h2o.runif(train.h2o)
+trainHex.split <- h2o.splitFrame(train.h2o, ratios=.8)
+grid <- h2o.grid("gbm",
+              hyper_params = hyper_parameters,
+              learn_rate = 0.01,
+              nfolds = 10,
+              seed = 123,   
+              y = y.dep, x = x.indep,
+              distribution="AUTO",
+              training_frame = trainHex.split[[1]],
+              validation_frame = trainHex.split[[2]])
+print(grid)
+  # print out the mse for all of the models
+model_ids <- grid@model_ids
+mse <- vector(mode="numeric", length=0)
+grid_models <- lapply(model_ids, function(model_id) { model = h2o.getModel(model_id) })
+for (i in 1:length(grid_models)) {
+ print(sprintf("mse: %f", h2o.mse(grid_models[[i]])))
+ mse[i] <- h2o.mse(grid_models[[i]])
+}
+
+
+best_id <- model_ids[order(mse,decreasing=F)][1]
+				 
+fit.best <- h2o.getModel(model_id = best_id[[1]])
+
+message("Best Model is: ", best_id) 
+predict.gbm <- as.data.frame(h2o.predict(fit.best, test.h2o))
+sub_gbm <- data.frame(PassengerId = test$PassengerId,
+                                      Survived = predict.gbm$predict)
+write.csv(sub_gbm, file = "gbm_mod_Solution3.csv", quote = FALSE, row.names=FALSE)
+#"mse: 0.217506"
+#"mse: 0.216140"
+```
+
+
+  
+### H2.o RF
+```{r}
+r <- h2o.runif(train.h2o)
+trainHex.split <- h2o.splitFrame(train.h2o, ratios=.75)
+grid <- h2o.grid("randomForest",
+                 #hyper_params = hyper_parameters,
+               seed = 123,   
+               y = y.dep, x = x.indep,
+               distribution="AUTO",
+               training_frame = trainHex.split[[1]],
+               validation_frame = trainHex.split[[2]])
+print(grid)
+  # print out the mse for all of the models
+model_ids <- grid@model_ids
+mse <- vector(mode="numeric", length=0)
+grid_models <- lapply(model_ids, function(model_id) { model = h2o.getModel(model_id) })
+for (i in 1:length(grid_models)) {
+ print(sprintf("mse: %f", h2o.mse(grid_models[[i]])))
+ mse[i] <- h2o.mse(grid_models[[i]])
+}
+
+
+best_id <- model_ids[order(mse,decreasing=F)][1]
+				 
+fit.best <- h2o.getModel(model_id = best_id[[1]])
+
+message("Best Model is: ", best_id) 
+predict.gbm <- as.data.frame(h2o.predict(fit.best, test.h2o))
+sub_gbm <- data.frame(PassengerId = test$PassengerId,
+                                      Survived = predict.gbm$predict)
+write.csv(sub_gbm, file = "h2o_rf_mod_Solution2.csv", quote = FALSE, row.names=FALSE)
+```
+
+## h2o deeplearning
+```{r}
+system.time(
+  dlearning.model <- h2o.deeplearning(y = y.dep,
+                                      x = x.indep,
+                                      training_frame = train.h2o,
+                                      epoch = 100,
+                                      hidden = c(150,150),
+                                      activation = "Rectifier",
+                                      seed = 1122
+  )
+)
+
+predict.dl <- as.data.frame(h2o.predict(dlearning.model, test.h2o))
+sub_dl <- data.frame(building_id = test$buildings_all.building_id, damage_grade = predict.dl$predict)
+write.csv(sub_dl, file = "sub_dl.csv", quote = FALSE, row.names=FALSE)
+```
+
+
+## Normal GBM
+We then build our model using randomForest on the training set.
+
+```{r}
+# Set a random seed
+set.seed(754)
+
+# Build the model (note: not all possible variables are used)
+gbm_model <- gbm(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + 
+                                            Fare + Embarked + Title + 
+                                            FsizeD + Child + Mother,
+                                            data = train,
+                 var.monotone=c(0,0,0,0,0,0,0,0,0,0,0),
+                 distribution="gaussian",
+                 n.trees=1000,
+                 shrinkage=0.05,
+                 interaction.depth=3,
+                 bag.fraction = 0.5,
+                 train.fraction = 0.8,
+                 keep.data=TRUE,
+                 n.cores=1
+                 )
+best.iter <- gbm.perf(gbm_model,method="OOB")
+print(best.iter)
+# Predict using the test set
+prediction <- predict(gbm_model, test, best.iter)
+
+# Save the solution to a dataframe with two columns: PassengerId and Survived (prediction)
+solution <- data.frame(PassengerID = test$PassengerId, Survived = prediction)
+
+# Write the solution to file
+write.csv(solution, file = 'gb_mod_Solution.csv', row.names = F)
+```
+# Conclusion
+Thank you for taking the time to read through my first exploration of a Kaggle dataset. I look forward to doing more. Again, this newbie welcomes comments and suggestions!
+
+
+
